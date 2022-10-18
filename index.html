@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+  <meta name="renderer" content="webkit" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0" />
+  <link rel="icon" href="assets/images/logo.ico" type="image/x-icon" />
+  <link rel="shortcut icon" href="assets/images/logo.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="main.css" type="text/css" />
+  <title>Phigros分数管理器</title>
+</head>
+
+<body>
+  <noscript class="warning">
+    <p>您的浏览器未启用或不支持JavaScript，无法使用本网站。</p>
+    <p>Your browser isn't enabled or doesn't support JavaScript. Please check and try again.</p>
+  </noscript>
+  <main>
+    <div class="row">
+      <h2>Phigros分数管理器</h2>
+      <h4>v0.1.1017</h4>
+    </div>
+    <div class="row">
+      <span class="button" id="import">导入数据</span>
+      <span class="button" id="export">备份数据</span>
+      <span class="button" id="delete">删除数据</span>
+      <span class="button" id="sort_order">排序方式</span>
+    </div>
+    <div class="row player_info">
+      <p id="pid">--</p>
+      <p id="rks">--</p>
+      <p id="cmr">
+        <span id="cmr_rank">--</span><span id="cmr_level"></span>
+      </p>
+    </div>
+    <div id="record_list" class="empty"></div>
+  </main>
+  <script src="app.js" type="module"></script>
+</body>
+
+</html>
