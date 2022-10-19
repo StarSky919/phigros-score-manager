@@ -95,11 +95,11 @@ export function parsePlayerPrefs(xml) {
     for (const elm of nodes) try {
       const key = f(elm.getAttribute("name"));
       const value = f(elm.textContent);
-      /.*\.Record\..*/.test(key) ? data[key] = JSON.parse(value) : ["ChallengeModeRank", "playerID"].includes(key) && (data[key] = value);
+      /.*\.Record\..*/.test(key) ? data[key] = JSON.parse(value) : ["ChallengeModeRank", "playerID", 'Introduction'].includes(key) && (data[key] = value);
     } catch (err) {}
     return process;
   }
   process(t, data)(e, data);
-  if(Object.keys(data).length === 0) throw new Error('Empty XML file');
+  if (Object.keys(data).length === 0) throw new Error('Empty XML file');
   return data;
 }

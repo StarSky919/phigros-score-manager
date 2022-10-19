@@ -1,3 +1,9 @@
+importScripts('/lib/pako_inflate.min.js');
+
+function isNullish(value) {
+  return value === void 0 || value === null;
+}
+
 function bytesToString(byteArray) {
   if (!byteArray.forEach) {
     return String.fromCharCode(byteArray);
@@ -29,7 +35,7 @@ function getLength(arr, offset) {
   }
 }
 
-export function parseAndroidBackup(ta) {
+function parseAndroidBackup(ta) {
   let offset = 0;
 
   if (bytesToString(ta.subarray(offset, offset + 14)) != 'ANDROID BACKUP') {
@@ -64,4 +70,25 @@ export function parseAndroidBackup(ta) {
     }
     offset += 512;
   }
+}
+
+onmessage = event => {
+  const file = event.data;
+  const extension = /.*\.(xml|txt|ab)$/g.exec(file.name)[1];
+  const reader = new FileReader();
+  reader.addEventListener('load', event => {
+    const { result } = event.target;
+    if (extension === 'xml') {
+      return postMessage({ type: 1, result });
+    }
+    if (extension === 'ab') {
+      return postMessage({ type: 1, result: parseAndroidBackup(new Uint8Array(result)) });
+    }
+    if (extension === 'txt') {
+      const { playerID, ChallengeModeRank, records } = JSON.parse(decodeURI(result));
+      return postMessage({ type: 0, result: { playerID, ChallengeModeRank, ...records } });
+    }
+    throw new Error('Unexpected file type');
+  });
+  ['xml', 'txt'].includes(extension) ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
 }

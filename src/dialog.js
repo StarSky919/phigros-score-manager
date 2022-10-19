@@ -1,4 +1,4 @@
-import { Time, isNullish, sleep, createElement } from './utils.js';
+import { noop, Time, isNullish, sleep, createElement } from './utils.js';
 
 const { body } = document;
 export class Dialog {
@@ -10,7 +10,7 @@ export class Dialog {
 
   constructor({ bgclick = true } = {}) {
     this._background.classList.add('dialog_background', 'hidden');
-    this._background.addEventListener('click', () => bgclick && this.close());
+    this._background.addEventListener('click', () => bgclick ? this._close() : noop);
     this._dialog.classList.add('dialog');
     this._title.classList.add('dialog_title');
     this._title.innerText = '提示';
@@ -42,7 +42,7 @@ export class Dialog {
     const button = createElement('span');
     button.innerText = text;
     button.classList.add('button');
-    button.addEventListener('click', func.bind(this, () => this.close()));
+    button.addEventListener('click', func.bind(this, () => this._close()));
     this._buttons.appendChild(button);
     return this;
   }
@@ -54,10 +54,10 @@ export class Dialog {
       this._background.classList.remove('hidden');
       this._dialog.classList.add('display');
     });
-    return { close: () => this.close() };
+    return { close: () => this._close() };
   }
 
-  close() {
+  _close() {
     this._background.classList.add('hidden');
     this._dialog.classList.remove('display');
     sleep(0.3 * Time.second).then(() => {

@@ -1,16 +1,15 @@
 export const $ = id => document.getElementById(id);
 export const $$ = query => document.querySelector(query);
 export const $$$ = query => document.querySelectorAll(query);
+export function noop() {}
 
 const p0 = (num, length = 2) => num.toString().padStart(length, '0');
-
 const millisecond = 1;
 const second = 1000;
 const minute = second * 60;
 const hour = minute * 60;
 const day = hour * 24;
 const week = day * 7;
-
 export const Time = {
   millisecond,
   second,
@@ -78,4 +77,12 @@ export function debounce(callback, delay) {
 
 export function createElement(tag) {
   return document.createElement(tag);
+}
+
+export function getRating(acc, difficulty) {
+  return ((acc - 55) / 45) ** 2 * difficulty;
+}
+
+export function getAcc(rating, difficulty) {
+  return (rating / difficulty) ** 0.5 * 45 + 55;
 }

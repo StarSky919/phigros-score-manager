@@ -1,3 +1,19 @@
+@font-face {
+  font-family: "Saira";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./fonts/Saira-Regular.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "Saira";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./fonts/Saira-Italic.ttf) format("truetype");
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -8,6 +24,7 @@
 *,
 *::before,
 *::after {
+  font-family: "Saira", sans-serif;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   -webkit-appearance: none;
@@ -17,8 +34,9 @@
 }
 
 :root {
-  --background-color: #F9F9F9;
+  --background-color: #FFFFFF;
 
+  color: #252525;
   line-height: 1.125;
   font-size: 1rem;
   -moz-osx-font-smoothing: grayscale;
@@ -104,6 +122,10 @@ p {
   font-size: 0.9em;
   text-align: center;
   cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 
 .button:active {
@@ -255,7 +277,7 @@ p {
   overflow-y: scroll;
   width: 100%;
   padding: 0 0.65rem;
-  background: #F0F0F0;
+  background: #F3F3F3;
   text-align: center;
   word-wrap: break-word;
   font-size: 90%;
@@ -264,6 +286,11 @@ p {
 .dialog_content>* {
   margin: calc(var(--dialog-width) * 0.065) 0;
   line-height: 1.3;
+}
+
+.dialog_content>p {
+  margin: calc(var(--dialog-width) * 0.065) 0;
+  line-height: 1.5;
 }
 
 .dialog_content .input,
@@ -359,11 +386,17 @@ main>.row {
   padding: 4px 8px;
   width: var(--record_box-width);
   border: 1px solid #BFBFBF;
-  background: #FFFFFF;
+  background: var(--background-color);
+  line-height: 1.2rem;
 }
 
-.record_box>*:not(:last-of-type) {
-  margin-bottom: 0.2rem;
+.record_box .row {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
 }
 
 .record_box .title {
@@ -374,39 +407,25 @@ main>.row {
   font-size: 0.9rem;
 }
 
-.record_box .score {
+.record_box .score,
+.record_box .rank {
   font-size: 1.2rem;
-  line-height: 1rem;
-}
-
-.record_box .acc {
-  font-size: 0.8rem;
-}
-
-.record_box .row {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: justify;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
-  -webkit-box-align: start;
-      -ms-flex-align: start;
-          align-items: flex-start;
-}
-
-.record_box .rating {
-  -webkit-box-flex: 5;
-      -ms-flex: 5;
-          flex: 5;
-  font-size: 0.8rem;
+  line-height: 1.3rem;
 }
 
 .record_box .rank {
-  -webkit-box-flex: 1;
-      -ms-flex: 1;
-          flex: 1;
+  color: #BFBFBF;
+  text-align: right;
+  font-weight: bold;
+}
+
+.record_box .acc,
+.record_box .rating,
+.record_box .ranking {
   font-size: 0.8rem;
+}
+
+.record_box .ranking {
   text-align: right;
 }
 
