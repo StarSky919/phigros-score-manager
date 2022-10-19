@@ -6,7 +6,14 @@ import { parseFiles, parsePlayerPrefs } from './src/parser.js';
 import { Dialog } from './src/dialog.js';
 import { generate } from './src/generator.js';
 
-const VERSION = [0, 2, 1019];
+try {
+  localStorage.setItem('test', true);
+  localStorage.removeItem('test');
+} catch (err) {
+  Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请把它关闭并刷新页面','错误');
+}
+
+const VERSION = [0, 2, 1020];
 $('version').innerText = `v${VERSION.join('.')}`;
 const body = document.body;
 const psmStorage = new Datastore('φ');
@@ -320,7 +327,7 @@ $('manage').addEventListener('click', event => {
         }).show();
     })
     .button('导入', close => {
-      selectFile('.xml, .txt, .ab', async file => {
+      selectFile(async file => {
         close();
         const loading = new Dialog({ bgclick: false }).title('提示').content('正在加载数据，请稍等……').show();
         if (window.Worker) {

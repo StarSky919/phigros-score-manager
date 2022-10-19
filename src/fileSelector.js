@@ -2,10 +2,7 @@ import { $, createElement } from './utils.js';
 
 const select = $('select');
 
-export function selectFile(mime, callback) {
-  /*const selectFile = createElement('input');
-  selectFile.type = 'file';
-  selectFile.accept = mime;*/
+export function selectFile(callback) {
   function cb(event) {
     const file = event.target.files[0];
     callback(file);
