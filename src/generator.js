@@ -10,23 +10,18 @@ function loadImage(img, url) {
   });
 }
 
+const cav = createElement('canvas');
+cav.style.width = '100%';
+cav.style.height = 'auto';
+const ctx = cav.getContext('2d');
+
 export async function generate(songData, { playerID, ChallengeModeRank, rankingScore, records }) {
   const CMRRank = ['--', 'Green', 'Blue', 'Orange', 'Gold', 'Rainbow'];
-  const cav = createElement('canvas');
-  cav.style.width = '100%';
-  cav.style.height = 'auto';
-  const ctx = cav.getContext('2d');
-  const realWidth = cav.width = 3200 / 16 * 9;
   const realHeight = cav.height = 3200;
+  const realWidth = cav.width = cav.height / 16 * 9;
   const padding = realHeight / 40;
   const row = 13;
   const column = 2;
-
-  const container = createElement('div');
-  const p = createElement('p');
-  p.innerText = '正在生成图片，请稍等……';
-  container.appendChild(p)
-  container.appendChild(cav);
   const loading = new Dialog({ bgclick: false })
     .title('正在生成图片，请稍等……')
     .content(cav, true)
@@ -45,7 +40,7 @@ export async function generate(songData, { playerID, ChallengeModeRank, rankingS
 
     ctx.textAlign = 'left';
     ctx.font = `${realHeight / 48}px Saira`;
-    ctx.fillText(`${playerID} (${rounding(rankingScore,2)})`, padding * 2, padding * 2);
+    ctx.fillText(`${playerID} (${rounding(rankingScore,2)})`, padding * 2, padding * 2, realWidth / 2 - padding * 2);
     ctx.font = `${realHeight / 80}px Saira`;
     ctx.fillText(`Best 19 Average: ${rounding(records.slice(1, 20).reduce((previous, {rating}) => previous += rating, 0) / 19, 4)}`, padding * 2, padding * 3);
     ctx.fillText(`Challenge Mode Rank: ${CMRRank[Math.floor(ChallengeModeRank / 100)]} ${ChallengeModeRank === 0 ? '' : ChallengeModeRank % 100}`, padding * 2, padding * 3.6875);
@@ -70,8 +65,6 @@ export async function generate(songData, { playerID, ChallengeModeRank, rankingS
     const bw = (realWidth - padding * 4) / column;
     const bh = (realHeight - padding * 8) / row;
     const bp = padding / 5;
-    const { actualBoundingBoxDescent: ABBD } = ctx.measureText('A');
-    const { actualBoundingBoxDescent: ABBD2 } = ctx.measureText('Ap');
     for (const { index, id, dn, a, s, c } of records) {
       const song = songData[id] || { song: 'No Data', chart: {} };
       const cr = Math.floor(index / 2);
@@ -90,8 +83,8 @@ export async function generate(songData, { playerID, ChallengeModeRank, rankingS
       ctx.textAlign = 'left';
       ctx.font = `${realHeight / 96}px Saira`;
       const title = song.song;
-      ctx.fillText(title, x, y += bp / 2.25, mw);
-      y += ABBD;
+      ctx.fillText(title, x, y += bp / 2, mw);
+      y += bp * 1.875;
 
       ctx.font = `${realHeight / 64}px Saira`;
       const score = (s || 0).toString().padStart(6, '0');
@@ -104,14 +97,14 @@ export async function generate(songData, { playerID, ChallengeModeRank, rankingS
       if (c) ctx.fillStyle = '#0077FF';
       if (s === 1e6) ctx.fillStyle = '#F6F600';
       ctx.fillText(rank, x + bw - iw - bp * 3, y);
-      y += scoreABBD + bp / 2;
+      y += bp * 2.75;
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#F9F9F9';
       ctx.font = `${realHeight / 96}px Saira`;
       const acc = `Acc: ${rounding(a, 2)}%`;
       ctx.fillText(acc, x, y += bp / 6, mw);
-      y += ABBD2;
+      y += bp * 2.25;
 
       const difficulty = song.chart[dn] ? song.chart[dn].difficulty : 0;
       const rating = `${dn} Lv.${difficulty} > ${rounding(getRating(a, difficulty), 2)}`;

@@ -1,19 +1,19 @@
 import './lib/pako_inflate.min.js';
 import { $, $$, $$$, Time, isNullish, rounding, sleep, createElement, getRating, getAcc } from './src/utils.js';
-import { selectFile } from './src/fileSelector.js';
 import { Datastore } from './src/datastore.js';
-import { parseFiles, parsePlayerPrefs } from './src/parser.js';
 import { Dialog } from './src/dialog.js';
+import { selectFile } from './src/fileSelector.js';
+import { parseFiles, parsePlayerPrefs } from './src/parser.js';
 import { generate } from './src/generator.js';
 
 try {
   localStorage.setItem('test', true);
   localStorage.removeItem('test');
 } catch (err) {
-  Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请把它关闭并刷新页面','错误');
+  Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请把它关闭并刷新页面', '错误');
 }
 
-const VERSION = [0, 2, 1020];
+const VERSION = [0, 2, 1021];
 $('version').innerText = `v${VERSION.join('.')}`;
 const body = document.body;
 const psmStorage = new Datastore('φ');
@@ -193,7 +193,7 @@ function renderScores() {
         info.appendChild(chart);
         const charter = createElement('div');
         charter.style.cssText += rowCSS + 'overflow:hidden;';
-        charter.innerHTML = `<span style='flex: 20%; white-space: nowrap; text-align: left;'>谱师：</span><span style='white-space: nowrap; overflow: scroll;'>${song.chart[dn].charter}</span>`;
+        charter.innerHTML = `<span style='white-space: nowrap; text-align: left;'>谱师：</span><span>${song.chart[dn].charter}</span>`;
         info.appendChild(charter);
       }
       container.appendChild(info);
