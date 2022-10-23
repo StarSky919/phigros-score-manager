@@ -13,7 +13,7 @@ try {
   Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请把它关闭并刷新页面', '错误');
 }
 
-const VERSION = [0, 2, 1021];
+const VERSION = [0, 2, 1023];
 $('version').innerText = `v${VERSION.join('.')}`;
 const body = document.body;
 const psmStorage = new Datastore('φ');
@@ -448,6 +448,7 @@ rks.addEventListener('click', event => {
     })
   }
   const b19 = sortRecords(records).slice(0, 19);
+  const b19average = rounding(b19.reduce((previous, {rating}) => previous += rating, 0) / 19, 2);
   const averageDifficulty = rounding(b19.reduce((previous, { id, dn }) => previous + songData[id].chart[dn].difficulty, 0) / 19, 2);
   const lv16 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 16);
   const lv15 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 15);
@@ -461,7 +462,7 @@ rks.addEventListener('click', event => {
     result.push(`您已游玩过其中的${songPlayedTotal}首歌曲，${chartPlayedTotal}张谱面。`);
     result.push(`\n所有游玩过的谱面中，\nFull Combo的数量为${chartFCedTotal.length}，All Perfect的数量为${chartAPedTotal.length}。`);
     result.push(`所有All Perfect的成绩中，\nIN难度的数量为${chartAPed.IN.length}，AT难度的数量为${chartAPed.AT.length}，\nLv.15的数量为${chartAPed.Lv15.length}，Lv.16的数量为${chartAPed.Lv16.length}。`);
-    result.push(`\n在您的Best19中，谱面平均定数约为${averageDifficulty}，\nLv.15的数量为${lv15.length}，Lv.16的数量为${lv16.length}。`);
+    result.push(`\n在您的Best19中，\n谱面平均定数约为${averageDifficulty}，平均Rating约为${b19average}，\nLv.15的数量为${lv15.length}，Lv.16的数量为${lv16.length}。`);
     result.push('再接再厉！');
     break;
   }

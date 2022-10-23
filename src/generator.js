@@ -55,7 +55,7 @@ export async function generate(songData, { playerID, ChallengeModeRank, rankingS
     ctx.lineWidth = realHeight / 1000;
     ctx.strokeStyle = '#F9F9F9';
 
-    const line1Y = padding * 5;
+    const line1Y = padding * 4.5;
     ctx.beginPath();
     ctx.moveTo(padding * 2, line1Y);
     ctx.lineTo(realWidth - padding * 2, line1Y);
@@ -65,13 +65,21 @@ export async function generate(songData, { playerID, ChallengeModeRank, rankingS
     const bw = (realWidth - padding * 4) / column;
     const bh = (realHeight - padding * 8) / row;
     const bp = padding / 5;
+
+    const line2Y = padding * 5.5 + bh * 10;
+    ctx.beginPath();
+    ctx.moveTo(padding * 2, line2Y);
+    ctx.lineTo(realWidth - padding * 2, line2Y);
+    ctx.closePath();
+    ctx.stroke();
+
     for (const { index, id, dn, a, s, c } of records) {
       const song = songData[id] || { song: 'No Data', chart: {} };
       const cr = Math.floor(index / 2);
       const cc = index % 2;
       if (cr + 1 > row) break;
       let x = padding * 2 + cc * bw + bp;
-      let y = padding * 6 + cr * bh + bp;
+      let y = padding * (cr > 9 ? 6 : 5) + cr * bh + bp;
       const ih = bh - bp * 2;
       const iw = ih / 1080 * 2048;
       const img = new Image();
