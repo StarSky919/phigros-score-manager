@@ -80,6 +80,7 @@ export function createElement(tag) {
 }
 
 export function getRating(acc, difficulty) {
+  if (acc < 70) return 0;
   return ((acc - 55) / 45) ** 2 * difficulty;
 }
 

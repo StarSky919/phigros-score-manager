@@ -395,6 +395,10 @@ main>.row .button {
   line-height: 1.2rem;
 }
 
+.record_box * {
+  pointer-events: none;
+}
+
 .record_box .row {
   display: -webkit-box;
   display: -ms-flexbox;

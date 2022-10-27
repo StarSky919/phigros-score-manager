@@ -13,7 +13,7 @@ try {
   Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请把它关闭并刷新页面', '错误');
 }
 
-const VERSION = [0, 2, 1023];
+const VERSION = [0, 2, 1027];
 $('version').innerText = `v${VERSION.join('.')}`;
 const body = document.body;
 const psmStorage = new Datastore('φ');
@@ -61,7 +61,7 @@ function sortRecords(records, padEmpty = true) {
   const temp = [];
   for (const key in records) {
     const [, id, dn] = /(.*)\.Record\.(.*)/.exec(key) || [, 'Introduction', 'EZ'];
-    temp.push(Object.assign({ id, dn }, records[key]));
+    temp.push(Object.assign({ id, dn, key }, records[key]));
   }
   const sorted = temp
     .map(e => {
@@ -105,6 +105,8 @@ function renderScores() {
     }
     const song = songData[record.id];
     const recordBox = createElement('div');
+    recordBox.dataset.songID = record.id;
+    recordBox.dataset.recordID = record.key;
     recordBox.classList.add('record_box');
     const title = createElement('div');
     title.classList.add('title');
@@ -149,111 +151,6 @@ function renderScores() {
     ranking.innerText = `${i === 0 ? '#0' : `#${record.a === 0 ? '--' : record.index}`}`;
     row2.appendChild(ranking);
     recordBox.appendChild(row2);
-    recordBox.addEventListener('click', event => {
-      const container = createElement('div');
-      const img = createElement('img');
-      img.style.cssText += 'width: 87.5%; height: auto; vertical-align: middle;';
-      img.src = `https://website-assets.starsky919.xyz/phigros/images/${record.id}.png`;
-      img.addEventListener('click', event => {
-        const link = createElement('a');
-        link.href = img.src;
-        link.target = '_blank';
-        link.click();
-      });
-      img.addEventListener('error', event => img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM0AAABsCAYAAADJ/DYiAAAAAXNSR0IArs4c6QAAAm5JREFUeF7t07ENACAMBDHYf8lsAhITcL1Tf2Xl9syc5QgQ+BbYovm2MiTwBETjEQhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJ3ABvvSHkNEIMfAAAAAASUVORK5CYII=');
-      container.appendChild(img);
-      const info = createElement('div');
-      info.style.cssText += 'display: flex; flex-direction: column; margin: 0 auto; margin-top: 0.5rem; width: 87.5%';
-      const rowCSS = 'display: flex; justify-content: space-between; font-size: 95%;'
-      const title = createElement('div');
-      title.innerText = song.song;
-      info.appendChild(title);
-      const composer = createElement('div');
-      composer.innerText = song.composer;
-      composer.style.fontSize = '90%';
-      info.appendChild(composer);
-      const illustrator = createElement('div');
-      illustrator.style.marginTop = '0.5rem';
-      illustrator.style.cssText += rowCSS;
-      illustrator.innerHTML = `<span>画师：</span><span>${song.illustrator}</span>`;
-      info.appendChild(illustrator);
-      const chapter = createElement('div');
-      chapter.style.cssText += rowCSS;
-      chapter.innerHTML = `<span style='white-space: nowrap;'>章节：</span><span>${song.chapter.replace('Chapter EX-', '')}</span>`;
-      info.appendChild(chapter);
-      const others = createElement('div');
-      others.style.cssText += rowCSS;
-      others.innerHTML = `<span>BPM：${song.bpm || '暂无数据'}</span><span>时长：${song.length || '暂无数据'}</span>`;
-      info.appendChild(others);
-      for (const dn in song.chart) {
-        const chart = createElement('div');
-        chart.style.marginTop = '0.5rem';
-        chart.style.cssText += rowCSS;
-        chart.innerHTML = `<span style='flex: 33.33%; text-align: left;'>${dn} Lv.${song.chart[dn].level}</span><span style='flex: 33.33%;'>定数：${song.chart[dn].difficulty}</span><span style='flex: 33.33%; text-align: right;'>物量：${song.chart[dn].combo}</span>`;
-        info.appendChild(chart);
-        const charter = createElement('div');
-        charter.style.cssText += rowCSS + 'overflow:hidden;';
-        charter.innerHTML = `<span style='white-space: nowrap; text-align: left;'>谱师：</span><span>${song.chart[dn].charter}</span>`;
-        info.appendChild(charter);
-      }
-      container.appendChild(info);
-      new Dialog().title('歌曲信息')
-        .content(container, true)
-        .button('编辑记录', close => {
-          const container = createElement('div');
-          const acc = createElement('input');
-          acc.classList.add('input');
-          acc.type = 'number';
-          acc.placeholder = 'Acc';
-          acc.value = record.a || '';
-          container.appendChild(acc);
-          const score = createElement('input');
-          score.classList.add('input');
-          score.type = 'number';
-          score.placeholder = '分数';
-          score.value = record.s || '';
-          container.appendChild(score);
-          const fcc = createElement('div');
-          fcc.style.margin = '0.55rem auto';
-          fcc.classList.add('checkbox');
-          const fc = createElement('input');
-          fc.type = 'checkbox';
-          fc.checked = !!record.c;
-          fcc.appendChild(fc);
-          const label = createElement('label');
-          fc.id = label.htmlFor = 'full_combo';
-          label.innerHTML = '<span>Full Combo</span><span class="pattern"></span>';
-          fcc.appendChild(label);
-          container.appendChild(fcc);
-          const hint = createElement('div');
-          hint.style.padding = '0.55rem 0';
-          hint.innerText = '因Phigros四舍五入的机制，\n结算显示的Acc与实际Acc不完全相同，\n可能会导致RkS出现微小误差';
-          container.appendChild(hint);
-          new Dialog().title('编辑记录')
-            .content(container, true)
-            .button('取消', close => close())
-            .button('确定', close_2 => {
-              function error(str = '成绩') {
-                Dialog.show('请输入正确的' + str, '错误');
-              }
-              const data = getData();
-              const key = `${record.id}.Record.${record.dn}`;
-              const a = parseFloat(acc.value) || 0;
-              const s = parseInt(score.value) || 0;
-              const c = fc.checked ? 1 : 0;
-              if (a < 0 || a > 100) return error('Acc');
-              if (s < 0 || s > 1e6) return error('分数');
-              if ((a === 0 && s !== 0) || (a !== 0 && s === 0)) return error();
-              if ((a === 100 && s !== 1e6) || (a !== 100 && s === 1e6)) return error();
-              if (a === 100 && !c) return error();
-              if (a === 0 && s === 0) Reflect.deleteProperty(data.records, key);
-              else data.records[key] = { a, s, c };
-              close_2(), close(), setData(data);
-              sleep(0).then(() => renderScores());
-            }).show();
-        })
-        .button('确定', close => close()).show();
-    });
     recordList.appendChild(recordBox);
   }
 }
@@ -377,7 +274,7 @@ $('generate').addEventListener('click', async event => {
   phi.index = 0;
   const final = [phi, ...sorted];
   const rankingScore = final.slice(0, 20).reduce((previous, current) => previous + current.rating, 0) / 20;
-  const dataURL = await generate(songData, {
+  const dataURL = await generate(VERSION, songData, {
     playerID,
     ChallengeModeRank,
     rankingScore,
@@ -387,7 +284,7 @@ $('generate').addEventListener('click', async event => {
   const link = createElement('a');
   link.download = 'image.png';
   link.href = dataURL;
-  new Dialog()
+  new Dialog({ bgclick: false })
     .content('查分图已生成完毕，点击“下载”按钮即可保存')
     .button('取消', close => close())
     .button('下载', close => (close(), link.click())).show();
@@ -448,7 +345,7 @@ rks.addEventListener('click', event => {
     })
   }
   const b19 = sortRecords(records).slice(0, 19);
-  const b19average = rounding(b19.reduce((previous, {rating}) => previous += rating, 0) / 19, 2);
+  const b19average = rounding(b19.reduce((previous, { rating }) => previous += rating, 0) / 19, 2);
   const averageDifficulty = rounding(b19.reduce((previous, { id, dn }) => previous + songData[id].chart[dn].difficulty, 0) / 19, 2);
   const lv16 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 16);
   const lv15 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 15);
@@ -495,6 +392,117 @@ cmr.addEventListener('click', event => {
       data.ChallengeModeRank = value ? value : 0;
       close(), setData(data), sleep(0).then(() => renderScores());
     }).show();
+});
+
+recordList.addEventListener('click', event => {
+  const recordBox = event.target;
+  if (!recordBox.classList.contains('record_box')) return;
+  const { songID, recordID } = recordBox.dataset;
+  if (isNullish(songID) || isNullish(recordID)) return;
+  const song = songData[songID];
+  const record = getData().records[recordID] || { a: 0, s: 0, c: 0 };
+  const container = createElement('div');
+  const img = createElement('img');
+  img.style.cssText += 'width: 87.5%; height: auto; vertical-align: middle;';
+  img.src = `https://website-assets.starsky919.xyz/phigros/images/${songID}.png`;
+  img.addEventListener('click', event => {
+    const link = createElement('a');
+    link.href = img.src;
+    link.target = '_blank';
+    link.click();
+  });
+  img.addEventListener('error', event => img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM0AAABsCAYAAADJ/DYiAAAAAXNSR0IArs4c6QAAAm5JREFUeF7t07ENACAMBDHYf8lsAhITcL1Tf2Xl9syc5QgQ+BbYovm2MiTwBETjEQhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJ3ABvvSHkNEIMfAAAAAASUVORK5CYII=');
+  container.appendChild(img);
+  const info = createElement('div');
+  info.style.cssText += 'display: flex; flex-direction: column; margin: 0 auto; margin-top: 0.5rem; width: 87.5%';
+  const rowCSS = 'display: flex; justify-content: space-between; font-size: 95%;'
+  const title = createElement('div');
+  title.innerText = song.song;
+  info.appendChild(title);
+  const composer = createElement('div');
+  composer.innerText = song.composer;
+  composer.style.fontSize = '90%';
+  info.appendChild(composer);
+  const illustrator = createElement('div');
+  illustrator.style.marginTop = '0.5rem';
+  illustrator.style.cssText += rowCSS;
+  illustrator.innerHTML = `<span>画师：</span><span>${song.illustrator}</span>`;
+  info.appendChild(illustrator);
+  const chapter = createElement('div');
+  chapter.style.cssText += rowCSS;
+  chapter.innerHTML = `<span style='white-space: nowrap;'>章节：</span><span>${song.chapter.replace('Chapter EX-', '')}</span>`;
+  info.appendChild(chapter);
+  const others = createElement('div');
+  others.style.cssText += rowCSS;
+  others.innerHTML = `<span>BPM：${song.bpm || '暂无数据'}</span><span>时长：${song.length || '暂无数据'}</span>`;
+  info.appendChild(others);
+  for (const dn in song.chart) {
+    const chart = createElement('div');
+    chart.style.marginTop = '0.5rem';
+    chart.style.cssText += rowCSS;
+    chart.innerHTML = `<span style='flex: 33.33%; text-align: left;'>${dn} Lv.${song.chart[dn].level}</span><span style='flex: 33.33%;'>定数：${song.chart[dn].difficulty}</span><span style='flex: 33.33%; text-align: right;'>物量：${song.chart[dn].combo}</span>`;
+    info.appendChild(chart);
+    const charter = createElement('div');
+    charter.style.cssText += rowCSS + 'overflow:hidden;';
+    charter.innerHTML = `<span style='white-space: nowrap; text-align: left;'>谱师：</span><span>${song.chart[dn].charter}</span>`;
+    info.appendChild(charter);
+  }
+  container.appendChild(info);
+  new Dialog().title('歌曲信息')
+    .content(container, true)
+    .button('编辑记录', close => {
+      const container = createElement('div');
+      const acc = createElement('input');
+      acc.classList.add('input');
+      acc.type = 'number';
+      acc.placeholder = 'Acc';
+      acc.value = record.a || '';
+      container.appendChild(acc);
+      const score = createElement('input');
+      score.classList.add('input');
+      score.type = 'number';
+      score.placeholder = '分数';
+      score.value = record.s || '';
+      container.appendChild(score);
+      const fcc = createElement('div');
+      fcc.style.margin = '0.55rem auto';
+      fcc.classList.add('checkbox');
+      const fc = createElement('input');
+      fc.type = 'checkbox';
+      fc.checked = !!record.c;
+      fcc.appendChild(fc);
+      const label = createElement('label');
+      fc.id = label.htmlFor = 'full_combo';
+      label.innerHTML = '<span>Full Combo</span><span class="pattern"></span>';
+      fcc.appendChild(label);
+      container.appendChild(fcc);
+      const hint = createElement('div');
+      hint.style.padding = '0.55rem 0';
+      hint.innerText = '因Phigros四舍五入的机制，\n结算显示的Acc与实际Acc不完全相同，\n可能会导致RkS出现微小误差';
+      container.appendChild(hint);
+      new Dialog().title('编辑记录')
+        .content(container, true)
+        .button('取消', close => close())
+        .button('确定', close_2 => {
+          function error(str = '成绩') {
+            Dialog.show('请输入正确的' + str, '错误');
+          }
+          const data = getData();
+          const a = parseFloat(acc.value) || 0;
+          const s = parseInt(score.value) || 0;
+          const c = fc.checked ? 1 : 0;
+          if (a < 0 || a > 100) return error('Acc');
+          if (s < 0 || s > 1e6) return error('分数');
+          if ((a === 0 && s !== 0) || (a !== 0 && s === 0)) return error();
+          if ((a === 100 && s !== 1e6) || (a !== 100 && s === 1e6)) return error();
+          if (a === 100 && !c) return error();
+          if (a === 0 && s === 0) Reflect.deleteProperty(data.records, recordID);
+          else data.records[recordID] = { a, s, c };
+          close_2(), close(), setData(data);
+          sleep(0).then(() => renderScores());
+        }).show();
+    })
+    .button('确定', close => close()).show();
 });
 
 if (isNullish(getData())) initialize();
