@@ -1,5 +1,5 @@
 import './lib/pako_inflate.min.js';
-import { $, $$, $$$, Time, isNullish, rounding, sleep, createElement, getRating, getAcc } from './src/utils.js';
+import { $, $$, $$$, Time, isNullish, rounding, sleep, createElement, getRating, getAcc, parseRecordID } from './src/utils.js';
 import { Datastore } from './src/datastore.js';
 import { Dialog } from './src/dialog.js';
 import { selectFile } from './src/fileSelector.js';
@@ -10,11 +10,19 @@ try {
   localStorage.setItem('test', true);
   localStorage.removeItem('test');
 } catch (err) {
-  Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请把它关闭并刷新页面', '错误');
+  Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请关闭并刷新页面', '错误');
 }
 
-const VERSION = [0, 2, 1027];
+const VERSION = [0, 2, 1030];
 $('version').innerText = `v${VERSION.join('.')}`;
+$('version').addEventListener('click', event => {
+  new Dialog().title('当前版本更新日志')
+    .content('1.调整了歌曲信息和编辑记录的界面，\n新增“输入精确数据”功能；' +
+      '\n2.现在在生成图片前会进行提示；' +
+      '\n3.优化了部分UI和查分图的细节。')
+    .button('确定', close => close()).show();
+});
+
 const body = document.body;
 const psmStorage = new Datastore('φ');
 const songData = await fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => res.json())
@@ -26,6 +34,10 @@ const rks = $('rks');
 const cmr = $('cmr');
 const cmrRank = $('cmr_rank');
 const cmrLevel = $('cmr_level');
+
+function error(str = '成绩') {
+  Dialog.show('请输入正确的' + str, '错误');
+}
 
 function getData() {
   return psmStorage.get('psm_data');
@@ -60,7 +72,7 @@ function sortRecords(records, padEmpty = true) {
   }
   const temp = [];
   for (const key in records) {
-    const [, id, dn] = /(.*)\.Record\.(.*)/.exec(key) || [, 'Introduction', 'EZ'];
+    const [, id, dn] = parseRecordID(key) || [, 'Introduction', 'EZ'];
     temp.push(Object.assign({ id, dn, key }, records[key]));
   }
   const sorted = temp
@@ -266,34 +278,42 @@ $('sort_order').addEventListener('click', event => {
     .show();
 });
 
-$('generate').addEventListener('click', async event => {
+$('generate').addEventListener('click', event => {
   const { playerID, ChallengeModeRank, records } = getData();
   if (Object.keys(records || {}).length === 0) return Dialog.show('没有可以生成的数据，\n请先导入一个存档或手动添加记录');
-  const sorted = sortRecords(records, false);
-  const phi = Object.assign({ id: '', dn: 'EZ' }, sorted.find(e => e.a === 100) || { a: 0, s: 0, c: 0, rating: 0 });
-  phi.index = 0;
-  const final = [phi, ...sorted];
-  const rankingScore = final.slice(0, 20).reduce((previous, current) => previous + current.rating, 0) / 20;
-  const dataURL = await generate(VERSION, songData, {
-    playerID,
-    ChallengeModeRank,
-    rankingScore,
-    records: final
-  });
-  if (isNullish(dataURL)) return;
-  const link = createElement('a');
-  link.download = 'image.png';
-  link.href = dataURL;
-  new Dialog({ bgclick: false })
-    .content('查分图已生成完毕，点击“下载”按钮即可保存')
+  new Dialog()
+    .content('生成图片会消耗至多100MB的网络流量，\n如果您正在使用移动数据，请谨慎继续。\n（查分图分辨率为1800×3200）')
     .button('取消', close => close())
-    .button('下载', close => (close(), link.click())).show();
+    .button('确定', async close => {
+      close();
+      const sorted = sortRecords(records, false);
+      const phi = Object.assign({ id: '', dn: 'EZ' }, sorted.find(e => e.a === 100) || { a: 0, s: 0, c: 0, rating: 0 });
+      phi.index = 0;
+      const final = [phi, ...sorted];
+      const rankingScore = final.slice(0, 20).reduce((previous, current) => previous + current.rating, 0) / 20;
+      const dataURL = await generate(VERSION, songData, {
+        playerID,
+        ChallengeModeRank,
+        rankingScore,
+        records: final
+      });
+      if (isNullish(dataURL)) return;
+      const link = createElement('a');
+      link.download = 'image.png';
+      link.href = dataURL;
+      new Dialog({ bgclick: false })
+        .content('查分图已生成完毕，点击“下载”按钮即可保存')
+        .button('取消', close => close())
+        .button('下载', close => (close(), link.click())).show();
+    }).show();
 });
 
 $('about').addEventListener('click', event => {
   new Dialog().title('关于本站')
     .content(`Phigros分数管理器 v${VERSION.join('.')}\nhttps://psm.starsky919.xyz/` +
-      '\n开发者：StarSky919')
+      '\n开发者：StarSky919' +
+      '\nQQ：2197972830，Q群：486908465' +
+      '\n点击右上角版本号可查看当前版本更新日志')
     .button('确定', close => close()).show();
 });
 
@@ -325,7 +345,7 @@ rks.addEventListener('click', event => {
   const songTotal = songKeys.length;
   const chartTotal = Object.values(songData).reduce((previous, current) => previous + Object.keys(current.chart).length, 0);
   const songPlayedTotal = Object.keys(recordKeys.reduce((previous, current) => {
-    const [, id] = /(.*)\.Record\..*/.exec(current) || [, 'Introduction'];
+    const [, id] = parseRecordID(current) || [, 'Introduction'];
     previous[id] = true;
     return previous;
   }, {})).length;
@@ -336,11 +356,11 @@ rks.addEventListener('click', event => {
     AT: chartAPedTotal.filter(key => key.endsWith('AT')),
     IN: chartAPedTotal.filter(key => key.endsWith('IN')),
     Lv16: chartAPedTotal.filter(key => {
-      const [, id, dn] = /(.*)\.Record\.(.*)/.exec(key);
+      const [, id, dn] = parseRecordID(key);
       return songData[id].chart[dn].level === 16;
     }),
     Lv15: chartAPedTotal.filter(key => {
-      const [, id, dn] = /(.*)\.Record\.(.*)/.exec(key);
+      const [, id, dn] = parseRecordID(key);
       return songData[id].chart[dn].level === 15;
     })
   }
@@ -401,108 +421,159 @@ recordList.addEventListener('click', event => {
   if (isNullish(songID) || isNullish(recordID)) return;
   const song = songData[songID];
   const record = getData().records[recordID] || { a: 0, s: 0, c: 0 };
+  const [, , dn] = parseRecordID(recordID);
+  const editRecord = new Dialog().title(`编辑记录`);
   const container = createElement('div');
-  const img = createElement('img');
-  img.style.cssText += 'width: 87.5%; height: auto; vertical-align: middle;';
-  img.src = `https://website-assets.starsky919.xyz/phigros/images/${songID}.png`;
-  img.addEventListener('click', event => {
-    const link = createElement('a');
-    link.href = img.src;
-    link.target = '_blank';
-    link.click();
-  });
-  img.addEventListener('error', event => img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM0AAABsCAYAAADJ/DYiAAAAAXNSR0IArs4c6QAAAm5JREFUeF7t07ENACAMBDHYf8lsAhITcL1Tf2Xl9syc5QgQ+BbYovm2MiTwBETjEQhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJ3ABvvSHkNEIMfAAAAAASUVORK5CYII=');
-  container.appendChild(img);
-  const info = createElement('div');
-  info.style.cssText += 'display: flex; flex-direction: column; margin: 0 auto; margin-top: 0.5rem; width: 87.5%';
-  const rowCSS = 'display: flex; justify-content: space-between; font-size: 95%;'
   const title = createElement('div');
-  title.innerText = song.song;
-  info.appendChild(title);
-  const composer = createElement('div');
-  composer.innerText = song.composer;
-  composer.style.fontSize = '90%';
-  info.appendChild(composer);
-  const illustrator = createElement('div');
-  illustrator.style.marginTop = '0.5rem';
-  illustrator.style.cssText += rowCSS;
-  illustrator.innerHTML = `<span>画师：</span><span>${song.illustrator}</span>`;
-  info.appendChild(illustrator);
-  const chapter = createElement('div');
-  chapter.style.cssText += rowCSS;
-  chapter.innerHTML = `<span style='white-space: nowrap;'>章节：</span><span>${song.chapter.replace('Chapter EX-', '')}</span>`;
-  info.appendChild(chapter);
-  const others = createElement('div');
-  others.style.cssText += rowCSS;
-  others.innerHTML = `<span>BPM：${song.bpm || '暂无数据'}</span><span>时长：${song.length || '暂无数据'}</span>`;
-  info.appendChild(others);
-  for (const dn in song.chart) {
-    const chart = createElement('div');
-    chart.style.marginTop = '0.5rem';
-    chart.style.cssText += rowCSS;
-    chart.innerHTML = `<span style='flex: 33.33%; text-align: left;'>${dn} Lv.${song.chart[dn].level}</span><span style='flex: 33.33%;'>定数：${song.chart[dn].difficulty}</span><span style='flex: 33.33%; text-align: right;'>物量：${song.chart[dn].combo}</span>`;
-    info.appendChild(chart);
-    const charter = createElement('div');
-    charter.style.cssText += rowCSS + 'overflow:hidden;';
-    charter.innerHTML = `<span style='white-space: nowrap; text-align: left;'>谱师：</span><span>${song.chart[dn].charter}</span>`;
-    info.appendChild(charter);
-  }
-  container.appendChild(info);
-  new Dialog().title('歌曲信息')
-    .content(container, true)
-    .button('编辑记录', close => {
-      const container = createElement('div');
-      const acc = createElement('input');
-      acc.classList.add('input');
-      acc.type = 'number';
-      acc.placeholder = 'Acc';
-      acc.value = record.a || '';
-      container.appendChild(acc);
-      const score = createElement('input');
-      score.classList.add('input');
-      score.type = 'number';
-      score.placeholder = '分数';
-      score.value = record.s || '';
-      container.appendChild(score);
-      const fcc = createElement('div');
-      fcc.style.margin = '0.55rem auto';
-      fcc.classList.add('checkbox');
-      const fc = createElement('input');
-      fc.type = 'checkbox';
-      fc.checked = !!record.c;
-      fcc.appendChild(fc);
-      const label = createElement('label');
-      fc.id = label.htmlFor = 'full_combo';
-      label.innerHTML = '<span>Full Combo</span><span class="pattern"></span>';
-      fcc.appendChild(label);
-      container.appendChild(fcc);
-      const hint = createElement('div');
-      hint.style.padding = '0.55rem 0';
-      hint.innerText = '因Phigros四舍五入的机制，\n结算显示的Acc与实际Acc不完全相同，\n可能会导致RkS出现微小误差';
-      container.appendChild(hint);
-      new Dialog().title('编辑记录')
-        .content(container, true)
-        .button('取消', close => close())
-        .button('确定', close_2 => {
-          function error(str = '成绩') {
-            Dialog.show('请输入正确的' + str, '错误');
-          }
-          const data = getData();
-          const a = parseFloat(acc.value) || 0;
-          const s = parseInt(score.value) || 0;
+  title.style.padding = '0.55rem 0';
+  title.innerText = `${song.song} (${dn} Lv.${song.chart[dn].difficulty})`;
+  container.appendChild(title);
+  const acc = createElement('input');
+  acc.classList.add('input');
+  acc.type = 'number';
+  acc.placeholder = 'Acc';
+  acc.value = record.a || '';
+  container.appendChild(acc);
+  const score = createElement('input');
+  score.classList.add('input');
+  score.type = 'number';
+  score.placeholder = '分数';
+  score.value = record.s || '';
+  container.appendChild(score);
+  const fcc = createElement('div');
+  fcc.style.margin = '0.55rem auto';
+  fcc.classList.add('checkbox');
+  const fc = createElement('input');
+  fc.type = 'checkbox';
+  fc.checked = !!record.c;
+  fcc.appendChild(fc);
+  const label = createElement('label');
+  fc.id = label.htmlFor = 'full_combo';
+  label.innerHTML = '<span>Full Combo</span><span class="pattern"></span>';
+  fcc.appendChild(label);
+  container.appendChild(fcc);
+  const exact = createElement('div');
+  exact.classList.add('button');
+  exact.innerText = '输入精确数据';
+  exact.addEventListener('click', event => {
+    const container = createElement('div');
+    const title = createElement('div');
+    title.style.padding = '0.55rem 0';
+    title.innerText = `${song.song} (${dn} Lv.${song.chart[dn].difficulty})`;
+    container.appendChild(title);
+    const input = createElement('input');
+    input.classList.add('input');
+    input.type = 'text';
+    input.placeholder = '输入';
+    container.appendChild(input);
+    const fcc = createElement('div');
+    fcc.style.margin = '0.55rem auto';
+    fcc.classList.add('checkbox');
+    const fc = createElement('input');
+    fc.type = 'checkbox';
+    fcc.appendChild(fc);
+    const label = createElement('label');
+    fc.id = label.htmlFor = 'full_combo2';
+    label.innerHTML = '<span>Full Combo</span><span class="pattern"></span>';
+    fcc.appendChild(label);
+    container.appendChild(fcc);
+    const hint = createElement('div');
+    hint.style.padding = '0.55rem 0';
+    hint.innerText = '依次输入\n最大连击、Perfect、Good、Bad、Miss的数量\n以空格分割，数据将自动计算\n例：1415 1692 6 1 1、1266 1443 0 0 1';
+    container.appendChild(hint);
+    new Dialog().title('输入精确数据')
+      .content(container, true)
+      .button('取消', close => close())
+      .button('确定', close => {
+        const data = getData();
+        const [maxCombo, p, g = 0, b = 0, m = 0] = input.value.split(' ').map(item => Number(item));
+        if (isNullish(maxCombo) || isNullish(p)) Reflect.deleteProperty(data.records, recordID);
+        else {
+          const combo = p + g + b + m;
+          const base = 900000 / combo;
+          const baseScore = base * p + base * 0.65 * g;
+          const a = 100 - 35 / combo * g - 100 / combo * (b + m);
+          const s = rounding(maxCombo / combo * 100000 + baseScore);
           const c = fc.checked ? 1 : 0;
-          if (a < 0 || a > 100) return error('Acc');
-          if (s < 0 || s > 1e6) return error('分数');
-          if ((a === 0 && s !== 0) || (a !== 0 && s === 0)) return error();
-          if ((a === 100 && s !== 1e6) || (a !== 100 && s === 1e6)) return error();
-          if (a === 100 && !c) return error();
-          if (a === 0 && s === 0) Reflect.deleteProperty(data.records, recordID);
-          else data.records[recordID] = { a, s, c };
-          close_2(), close(), setData(data);
-          sleep(0).then(() => renderScores());
-        }).show();
+          if (combo !== song.chart[dn].combo) return error();
+          if (((a === 100 || (b + m === 0)) && !c) || ((a === 0 || (b + m !== 0)) && c)) return error();
+          if (rounding(a / 100 * 900000) !== rounding(baseScore)) return error();
+          data.records[recordID] = { a, s, c };
+        }
+        editRecord.close(), close(), setData(data);
+        sleep(0).then(() => renderScores());
+      }).show();
+  });
+  container.appendChild(exact);
+  editRecord.content(container, true)
+    .button('歌曲信息', close => {
+      const container = createElement('div');
+      const img = createElement('img');
+      img.style.cssText += 'width: 87.5%; height: auto; vertical-align: middle;';
+      img.src = `https://website-assets.starsky919.xyz/phigros/images/${songID}.png`;
+      img.addEventListener('click', event => {
+        const link = createElement('a');
+        link.href = img.src;
+        link.target = '_blank';
+        link.click();
+      });
+      img.addEventListener('error', event => img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM0AAABsCAYAAADJ/DYiAAAAAXNSR0IArs4c6QAAAm5JREFUeF7t07ENACAMBDHYf8lsAhITcL1Tf2Xl9syc5QgQ+BbYovm2MiTwBETjEQhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJ3ABvvSHkNEIMfAAAAAASUVORK5CYII=');
+      container.appendChild(img);
+      const info = createElement('div');
+      info.style.cssText += 'display: flex; flex-direction: column; margin: 0 auto; margin-top: 0.5rem; width: 87.5%';
+      const rowCSS = 'display: flex; justify-content: space-between; font-size: 95%;'
+      const title = createElement('div');
+      title.innerText = song.song;
+      info.appendChild(title);
+      const composer = createElement('div');
+      composer.innerText = song.composer;
+      composer.style.fontSize = '90%';
+      info.appendChild(composer);
+      const illustrator = createElement('div');
+      illustrator.style.marginTop = '0.5rem';
+      illustrator.style.cssText += rowCSS;
+      illustrator.innerHTML = `<span>画师：</span><span>${song.illustrator}</span>`;
+      info.appendChild(illustrator);
+      const chapter = createElement('div');
+      chapter.style.cssText += rowCSS;
+      chapter.innerHTML = `<span style='white-space: nowrap;'>章节：</span><span>${song.chapter.replace('Chapter EX-', '')}</span>`;
+      info.appendChild(chapter);
+      const others = createElement('div');
+      others.style.cssText += rowCSS;
+      others.innerHTML = `<span>BPM：${song.bpm || '暂无数据'}</span><span>时长：${song.length || '暂无数据'}</span>`;
+      info.appendChild(others);
+      for (const dn in song.chart) {
+        const chart = createElement('div');
+        chart.style.marginTop = '0.5rem';
+        chart.style.cssText += rowCSS;
+        chart.innerHTML = `<span style='flex: 33.33%; text-align: left;'>${dn} Lv.${song.chart[dn].level}</span><span style='flex: 33.33%;'>定数：${song.chart[dn].difficulty}</span><span style='flex: 33.33%; text-align: right;'>物量：${song.chart[dn].combo}</span>`;
+        info.appendChild(chart);
+        const charter = createElement('div');
+        charter.style.cssText += rowCSS + 'overflow:hidden;';
+        charter.innerHTML = `<span style='white-space: nowrap; text-align: left;'>谱师：</span><span>${song.chart[dn].charter}</span>`;
+        info.appendChild(charter);
+      }
+      container.appendChild(info);
+      new Dialog().title('歌曲信息')
+        .content(container, true)
+        .button('确定', close => close()).show();
     })
-    .button('确定', close => close()).show();
+    .button('取消', close => close())
+    .button('确定', close_2 => {
+      const data = getData();
+      const a = parseFloat(acc.value) || 0;
+      const s = parseInt(score.value) || 0;
+      const c = fc.checked ? 1 : 0;
+      if (a < 0 || a > 100) return error('Acc');
+      if (s < 0 || s > 1e6) return error('分数');
+      if ((a === 0 && s !== 0) || (a !== 0 && s === 0)) return error();
+      if ((a === 100 && s !== 1e6) || (a !== 100 && s === 1e6)) return error();
+      if (a === 100 && !c) return error();
+      if (a === 0 && s === 0) Reflect.deleteProperty(data.records, recordID);
+      else data.records[recordID] = { a, s, c };
+      close_2(), close(), setData(data);
+      sleep(0).then(() => renderScores());
+    }).show();
 });
 
 if (isNullish(getData())) initialize();

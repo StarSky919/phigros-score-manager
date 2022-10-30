@@ -114,7 +114,6 @@ p {
   display: inline-block;
   padding: 6px 8px;
   min-width: 4rem;
-  background: var(--background-color);
   border: 1px solid #BFBFBF;
   -webkit-transition: color 0.2s ease, border-color 0.2s ease;
   -o-transition: color 0.2s ease, border-color 0.2s ease;
@@ -295,7 +294,8 @@ p {
 
 .dialog_content .input,
 .dialog_content .checkbox,
-.dialog_content .radio {
+.dialog_content .radio,
+.dialog_content .button {
   margin: 0.55rem 0;
   width: calc(var(--dialog-width) * 0.75);
 }
@@ -310,12 +310,16 @@ p {
   display: flex;
   -ms-flex-pack: distribute;
       justify-content: space-around;
-  padding: 0 12.5%;
+  padding: 0 0.65rem;
   width: 100%;
 }
 
 .dialog_buttons .button {
-  margin: 0.65rem 0;
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  max-width: 50%;
+  margin: 0.65rem 0.35rem;
 }
 
 main>.row {

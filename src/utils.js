@@ -52,7 +52,7 @@ export function random(min, max) {
   return () => Math.round(Math.random() * (max - min) + min);
 }
 
-export function rounding(num, digit) {
+export function rounding(num, digit = 0) {
   return (Math.round(num * (10 ** digit)) / 10 ** digit).toFixed(digit);
 }
 
@@ -86,4 +86,8 @@ export function getRating(acc, difficulty) {
 
 export function getAcc(rating, difficulty) {
   return (rating / difficulty) ** 0.5 * 45 + 55;
+}
+
+export function parseRecordID(id) {
+  return /(.*)\.Record\.(.*)/.exec(id);
 }
