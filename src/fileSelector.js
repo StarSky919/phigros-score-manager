@@ -1,13 +1,10 @@
-import { $, createElement } from './utils.js';
+import { $ } from './utils.js';
 
 const select = $('select');
 
 export function selectFile(callback) {
-  function cb(event) {
-    const file = event.target.files[0];
-    callback(file);
-    select.removeEventListener('change', cb);
+  select.onchange = function(event) {
+    callback(event.target.files[0]);
   }
-  select.addEventListener('change', cb);
   select.click();
 }

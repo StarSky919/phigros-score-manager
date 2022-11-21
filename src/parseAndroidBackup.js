@@ -1,3 +1,5 @@
+import '../lib/pako_inflate.min.js';
+
 function bytesToString(byteArray) {
   if (!byteArray.forEach) {
     return String.fromCharCode(byteArray);

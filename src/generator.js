@@ -10,9 +10,13 @@ function loadImage(img, url) {
   });
 }
 
-const cav = createElement('canvas');
-cav.style.width = '100%';
-cav.style.height = 'auto';
+const cav = createElement({
+  tagName: 'canvas',
+  style: {
+    width: '100%',
+    height: 'auto'
+  }
+});
 const ctx = cav.getContext('2d');
 
 export async function generate(version, songData, { playerID, ChallengeModeRank, rankingScore, records }) {

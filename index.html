@@ -37,7 +37,38 @@
     </div>
     <div id="record_list" class="empty"></div>
   </main>
-  <input type="file" id="select" accept=".xml, .ab, .txt" style="display: none;">
+  <input type="file" id="select" style="display: none;">
+  <template id="record_box">
+    <div class="record_box">
+      <div class="title">{{ song }}</div>
+      <div class="row"><span class="score">{{ score }}</span><span class="rank">{{ rank }}</span></div>
+      <div class="acc">Acc: {{ acc }}</div>
+      <div class="row"><span class="rating">{{ dn }} Lv.{{ difficulty }} > {{ rating }}</span><span class="ranking">#{{ ranking }}</span></div>
+    </div>
+  </template>
+  <template id="song_info">
+    <div class="song_info">
+      <img class="illustration">
+      <div class="info">
+        <div class="title">{{ song }}</div>
+        <div class="composer">{{ composer }}</div>
+        <div class="illustrator row"><span>画师：</span><span>{{ illustrator }} </span></div>
+        <div class="chapter row"><span>章节：</span><span>{{ chapter }}</span></div>
+        <div class="other_info row"><span>BPM：{{ bpm }}</span><span>时长：{{ length }}</span></div>
+      </div>
+    </div>
+  </template>
+  <template id="chart_info">
+    <div class="chart_info row">
+      <span class="level">{{ dn }} Lv.{{ level }}</span>
+      <span class="difficulty">定数：{{ difficulty }}</span>
+      <span class="combo">物量：{{ combo }}</span>
+    </div>
+    <div class="charter_info row">
+      <span class="text">谱师：</span>
+      <span class="charter">{{ charter }}</span>
+    </div>
+  </template>
   <script src="app.js" type="module"></script>
 </body>
 

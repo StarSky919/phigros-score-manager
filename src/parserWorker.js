@@ -74,7 +74,7 @@ function parseAndroidBackup(ta) {
 
 onmessage = event => {
   const file = event.data;
-  const extension = /.*\.(xml|txt|ab)$/g.exec(file.name)[1];
+  const extension = /.*\.(.+)$/g.exec(file.name)[1];
   const reader = new FileReader();
   reader.addEventListener('load', event => {
     const { result } = event.target;
