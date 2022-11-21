@@ -301,7 +301,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
     const lv16 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 16);
     const lv15 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 15);
     const result = [];
-    result.push(`截至Phigros 2.4.2版本，\n共有${songTotal}首歌曲，${chartTotal}张谱面。`);
+    result.push(`截至Phigros 2.4.3版本，\n共有${songTotal}首歌曲，${chartTotal}张谱面。`);
     if (songPlayedTotal === 0 && chartPlayedTotal === 0) result.push('您尚未游玩过任何歌曲与谱面！');
     else {
       result.push(`您已游玩过其中的${songPlayedTotal}首歌曲，${chartPlayedTotal}张谱面。`);
