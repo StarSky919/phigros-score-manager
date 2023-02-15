@@ -114,7 +114,7 @@ export function createRecordBox(data) {
 export function createSongInfo(data) {
   const box = $('song_info').content.cloneNode(true).children[0];
   data.bpm = data.bpm || '暂无数据';
-  data.length = data.bpm || '暂无数据';
+  data.length = data.length || '暂无数据';
   const img = box.querySelector('img');
   img.src = data.img;
   img.addEventListener('click', event => createElement({ tagName: 'a', attr: { href: img.src, target: '_blank' } }).click());
