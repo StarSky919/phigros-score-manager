@@ -24,8 +24,8 @@ export class Dialog {
     classList: ['dialog_buttons']
   });
 
-  constructor({ bgclick = true } = {}) {
-    this._background.addEventListener('click', () => bgclick ? this.close() : noop);
+  constructor({ cancellable = true } = {}) {
+    this._background.addEventListener('click', () => cancellable ? this.close() : noop);
     this._dialog.appendChild(this._title);
     this._dialog.appendChild(this._content);
     this._dialog.appendChild(this._buttons);

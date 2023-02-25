@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url(./fonts/Saira-Regular.ttf) format("truetype");
+  src: url("./fonts/Saira-Regular.ttf") format("truetype");
 }
 
 @font-face {
@@ -11,7 +11,15 @@
   font-style: italic;
   font-weight: 400;
   font-display: swap;
-  src: url(./fonts/Saira-Italic.ttf) format("truetype");
+  src: url("./fonts/Saira-Italic.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "MiLanPro";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/MiLanPro_Regular.ttf") format("truetype");
 }
 
 * {
@@ -24,7 +32,7 @@
 *,
 *::before,
 *::after {
-  font-family: "Saira", sans-serif;
+  font-family: "Saira", "MiLanPro", sans-serif;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -357,39 +365,6 @@ main>.row .button {
 
 .record_box .ranking {
   text-align: right;
-}
-
-.song_info .row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 95%;
-}
-
-.song_info img {
-  width: 87.5%;
-  height: auto;
-  vertical-align: middle;
-}
-
-.song_info .info {
-  display: flex;
-  flex-direction: column;
-  margin: 0 auto;
-  margin-top: 0.5rem;
-  width: 87.5%;
-}
-
-.song_info .composer {
-  font-size: 90%;
-}
-
-.song_info .illustrator,
-.song_info .chart_info {
-  margin-top: 0.5rem;
-}
-
-.song_info .charter_info .text {
-  white-space: nowrap;
 }
 
 /*----------------*/

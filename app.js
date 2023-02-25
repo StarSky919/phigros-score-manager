@@ -1,7 +1,6 @@
-import { $, Time, isNullish, rounding, sleep, createElement, getRating, getAcc, parseRecordID, createRecordBox, createSongInfo } from './src/utils.js';
+import { $, Time, isNullish, rounding, sleep, createElement, getRating, getAcc, parseRecordID, createRecordBox } from './src/utils.js';
 import { Datastore } from './src/datastore.js';
 import { Dialog } from './src/dialog.js';
-import { selectFile } from './src/fileSelector.js';
 import { parseFiles, parsePlayerPrefs } from './src/parser.js';
 import { generate } from './src/generator.js';
 
@@ -9,19 +8,31 @@ try {
   localStorage.setItem('test', true);
   localStorage.removeItem('test');
 } catch (err) {
-  Dialog.show('localStorage API发生错误\n如果您打开了浏览器的无痕（隐私）模式，\n请将它关闭并刷新页面', '错误');
+  Dialog.show('localStorage API发生错误！\n如果您打开了浏览器的无痕（隐私）模式，\n请将它关闭并刷新页面。', '错误');
 }
 
-const VERSION = [0, 3, 1121];
-$('version').innerText = `v${VERSION.join('.')}`;
-$('version').addEventListener('click', event => {
-  new Dialog().title('当前版本更新日志')
-    .content('1.优化了网页的性能，减少了代码量；\n2.提高了网站对更多设备的兼容性。').button('确定').show();
+const VERSION = [0, 4, 225];
+const VERSION_TEXT = `v${VERSION.join('.')}`;
+$('version').innerText = VERSION_TEXT;
+
+let changelog;
+$('about').addEventListener('click', event => {
+  new Dialog().title('关于本站')
+    .content(`Phigros分数管理器 ${VERSION_TEXT}\nhttps://psm.starsky919.xyz/` +
+      '\n开发者：StarSky919' +
+      '\nQQ：2197972830，Q群：486908465')
+    .button('更新日志', async close => {
+      if (!changelog) changelog = await fetch('changelog.txt').then(res => res.text());
+      new Dialog().title(`${VERSION_TEXT}更新日志`)
+        .content(changelog).button('确定').show();
+    })
+    .button('确定').show();
 });
 
 const body = document.body;
 const psmStorage = new Datastore('φ');
 const CMRRank = ['--', '绿', '蓝', '橙', '金', '彩'];
+const select = $('select');
 const recordList = $('record_list');
 const pid = $('pid');
 const rks = $('rks');
@@ -43,19 +54,19 @@ function setData({ playerID, ChallengeModeRank, records }) {
 
 function initialize() {
   setData({ playerID: 'GUEST', ChallengeModeRank: 0, records: {} });
-  new Dialog({ bgclick: false }).title('欢迎使用Phigros分数管理器！')
+  new Dialog({ cancellable: false }).title('欢迎使用Phigros分数管理器！')
     .content('已自动为您新建了一个空存档。\n稍后您可以导入自己的存档，\n也可以手动输入所需的数据。\n绿色背景表示该谱面推分可以增加RkS，\n红色背景则相反。\n括号里是该谱面使RkS+0.01所需的最低Acc。')
-    .button('下一步', close => (close(), new Dialog({ bgclick: false }).title('欢迎使用Phigros分数管理器！')
-      .content('点击左上角的名称和右上角的课题成绩可以手动修改，点击中间的RkS可以查看统计信息。\n点击谱面可以查看歌曲信息以及手动编辑成绩。\n在“数据管理”中可以导入、删除或备份当前数据。\n点击“生成图片”可以生成并下载Best19查分图。\n祝您使用愉快！')
+    .button('下一步', close => (close(), new Dialog({ cancellable: false }).title('欢迎使用Phigros分数管理器！')
+      .content('点击左上角的名称和右上角的课题成绩可以手动修改，点击中间的RkS可以查看统计信息。\n点击谱面可以手动编辑成绩。\n在“数据管理”中可以导入、删除或备份当前数据。\n点击“生成图片”可以生成并下载Best19查分图。\n祝您使用愉快！')
       .button('开始').show())).show();
 }
 
-fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => res.json()).then(async songData => {
+fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => res.json()).then(async ({ pgrVersion, songData }) => {
   function sortRecords(records, padEmpty = true) {
     if (padEmpty) {
       for (const songID in songData) {
-        const { chart } = songData[songID];
-        for (const dn in chart) {
+        const { charts } = songData[songID];
+        for (const dn in charts) {
           const key = `${songID}.Record.${dn}`;
           if (isNullish(records[key])) records[key] = { a: 0, s: 0, c: 0 };
         }
@@ -68,7 +79,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
     }
     const sorted = temp
       .map(e => {
-        e.rating = e.a >= 70 ? getRating(e.a, songData[e.id].chart[e.dn].difficulty) : 0;
+        e.rating = e.a >= 70 ? getRating(e.a, songData[e.id].charts[e.dn].difficulty) : 0;
         return e;
       })
       .sort((a, b) => b.rating - a.rating);
@@ -83,8 +94,8 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
     const phi1b19 = [phi, ...sorted.slice(0, 19)];
     const rankingScore = phi1b19.reduce((previous, current) => previous + current.rating, 0) / 20;
     const final = [phi, ...sorted.sort((a, b) => {
-      const ad = songData[a.id].chart[a.dn].difficulty;
-      const bd = songData[b.id].chart[b.dn].difficulty;
+      const ad = songData[a.id].charts[a.dn].difficulty;
+      const bd = songData[b.id].charts[b.dn].difficulty;
       const c1 = a.rating === b.rating ? bd - ad : b.rating - a.rating;
       const c2 = ad === bd ? b.rating - a.rating : bd - ad;
       const c = [c1, c2, a.a === b.a ? c1 : b.a - a.a];
@@ -106,17 +117,17 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
         continue;
       }
       const song = songData[record.id];
-      const difficulty = song.chart[record.dn].difficulty;
+      const difficulty = song.charts[record.dn].difficulty;
       const phi = getRating(100, difficulty);
       const A = phi1b19.reduce((previous, current) => previous + current.rating * 5, 0);
       const S = ((A + 0.5 | 0) - A + 0.5) / 5;
       const O = getAcc(record.index < 19 ? record.rating + S : phi1b19[19].rating + S, difficulty);
       const recordBox = createRecordBox({
-        song: song.song,
+        song: song.name,
         score: record.s,
         acc: record.a,
         dn: record.dn,
-        difficulty: song.chart[record.dn].difficulty,
+        difficulty: song.charts[record.dn].difficulty,
         rating: rounding(record.rating, 2),
         ranking: `${i === 0 ? '0' : `${record.a === 0 ? '--' : record.index}`}`,
         c: record.c,
@@ -144,8 +155,8 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
       if (!merge) setData({ playerID, ChallengeModeRank, records: {} });
       const { playerID: pID, ChallengeModeRank: CMR, records: rcd } = getData();
       for (const songID in songData) {
-        const { chart } = songData[songID];
-        for (const dn in chart) {
+        const { charts } = songData[songID];
+        for (const dn in charts) {
           const key = `${songID}.Record.${dn}`;
           const s1 = rcd[key];
           const s2 = records[key];
@@ -166,7 +177,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
       Dialog.show('数据导入完成！'), refreshScores();
     }
 
-    new Dialog().title('请选择导入方式')
+    new Dialog({ cancellable: false }).title('请选择导入方式')
       .content('覆盖：新存档完全替换旧存档（不保留原数据）' +
         '\n\n合并：合并新旧存档的最高成绩（以Acc为准）')
       .button('取消').button('覆盖', close => { close(), process(false); })
@@ -181,28 +192,33 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
         '\n未加密的Android备份文件 (.ab后缀)' +
         '\n由本站导出的备份文件 (psm_backup.txt)')
       .button('取消').button('删除', close => new Dialog().title('删除数据')
-        .content('所有已导入数据都将被删除\n确定要继续吗？')
+        .content('所有已导入数据都将被删除。\n确定要继续吗？')
         .button('取消').button('确定', close_2 => { initialize(), close_2(), close(), refreshScores(); }).show())
       .button('备份', close => Object.keys(getData().records || {}).length === 0 ?
-        Dialog.show('没有可以生成的数据，\n请先导入一个存档或手动添加记录') :
+        Dialog.show('没有可以生成的数据，\n请先导入一个存档或手动添加记录。') :
         new Dialog().title('备份数据')
-        .content('点击“下载”来下载备份文件\n如果您正在使用Via浏览器且文件名是乱码，请手动修改为您可以记住的名字\n如果无法下载，请尝试在浏览器设置中更换下载器')
+        .content('点击“下载”来下载备份文件。\n如果您正在使用Via浏览器且文件名是乱码，请手动修改为您可以记住的名字。\n如果无法下载，请尝试在浏览器设置中更换下载器。')
         .button('取消').button('下载', close_2 => { createElement({ tagName: 'a', attr: { download: 'psm_backup.txt', href: `data:text/plain;base64,${btoa(encodeURI(JSON.stringify(getData())))}` } }).click(), close_2(), close(); }).show())
-      .button('导入', close => selectFile(async file => {
-        close();
-        const loading = new Dialog({ bgclick: false }).title('提示').content('正在加载数据，请稍等……').show();
-        if (!window.Worker) try {
-          const data = await parseFiles(file);
-          return loading.close(), importData(data);
-        } catch (err) {
-          return loading.close(), Dialog.show(`请选择正确的文件！\n\n错误信息：\n${err}`, '错误');
+      .button('导入', close => {
+        select.value = null;
+        select.onchange = async event => {
+          close();
+          const loading = new Dialog({ cancellable: false }).title('提示').content('正在加载数据，请稍等……').show();
+          const file = event.target.files[0];
+          if (!window.Worker) try {
+            const data = await parseFiles(file);
+            return loading.close(), importData(data);
+          } catch (err) {
+            return loading.close(), Dialog.show(`请选择正确的文件！\n\n错误信息：\n${err}`, '错误');
+          }
+          const worker = new Worker('./src/parserWorker.js');
+          worker.postMessage(file);
+          worker.addEventListener('message', ({ data: { type, result } }) => { loading.close(), importData(type ? parsePlayerPrefs(result) : result), worker.terminate(); });
+          worker.addEventListener('error', event => { loading.close(), Dialog.show(`请选择正确的文件！\n\n错误信息：\n${event.message.replace('Uncaught ', '')}`, '错误'), worker.terminate(); });
+          return;
         }
-        const worker = new Worker('./src/parserWorker.js');
-        worker.postMessage(file);
-        worker.addEventListener('message', ({ data: { type, result } }) => { loading.close(), importData(type ? parsePlayerPrefs(result) : result), worker.terminate(); });
-        worker.addEventListener('error', event => { loading.close(), Dialog.show(`请选择正确的文件！\n\n错误信息：\n${event.message.replace('Uncaught ', '')}`, '错误'), worker.terminate(); });
-        return;
-      })).show();
+        select.click();
+      }).show();
   });
 
   $('sort_order').addEventListener('click', event => {
@@ -217,7 +233,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
 
   $('generate').addEventListener('click', event => {
     const { playerID, ChallengeModeRank, records } = getData();
-    if (Object.keys(records || {}).length === 0) return Dialog.show('没有可以生成的数据，\n请先导入一个存档或手动添加记录');
+    if (Object.keys(records || {}).length === 0) return Dialog.show('没有可以生成的数据，\n请先导入一个存档或手动添加记录。');
     new Dialog()
       .content('生成图片会消耗至多100MB的网络流量，\n如果您正在使用移动数据，请谨慎继续。\n（查分图分辨率为1800×3200）')
       .button('取消').button('确定', async close => {
@@ -233,19 +249,10 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
           rankingScore,
           records: final
         });
-        if (!isNullish(dataURL)) new Dialog({ bgclick: false })
-          .content('查分图已生成完毕，点击“下载”按钮即可保存')
+        if (!isNullish(dataURL)) new Dialog({ cancellable: false })
+          .content('查分图已生成完毕，点击“下载”按钮即可保存。')
           .button('取消').button('下载', close => { close(), createElement({ tagName: 'a', attr: { download: 'image.png', href: dataURL } }).click(); }).show();
       }).show();
-  });
-
-  $('about').addEventListener('click', event => {
-    new Dialog().title('关于本站')
-      .content(`Phigros分数管理器 v${VERSION.join('.')}\nhttps://psm.starsky919.xyz/` +
-        '\n开发者：StarSky919' +
-        '\nQQ：2197972830，Q群：486908465' +
-        '\n点击右上角版本号可查看当前版本更新日志')
-      .button('确定').show();
   });
 
   pid.addEventListener('click', event => {
@@ -274,7 +281,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
     const songKeys = Object.keys(songData),
       recordKeys = Object.keys(records);
     const songTotal = songKeys.length;
-    const chartTotal = Object.values(songData).reduce((previous, current) => previous + Object.keys(current.chart).length, 0);
+    const chartTotal = Object.values(songData).reduce((previous, current) => previous + Object.keys(current.charts).length, 0);
     const songPlayedTotal = Object.keys(recordKeys.reduce((previous, current) => {
       const [, id] = parseRecordID(current) || [, 'Introduction'];
       previous[id] = true;
@@ -288,18 +295,18 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
       IN: chartAPedTotal.filter(key => key.endsWith('IN')),
       Lv16: chartAPedTotal.filter(key => {
         const [, id, dn] = parseRecordID(key);
-        return songData[id].chart[dn].level === 16;
+        return songData[id].charts[dn].level === 16;
       }),
       Lv15: chartAPedTotal.filter(key => {
         const [, id, dn] = parseRecordID(key);
-        return songData[id].chart[dn].level === 15;
+        return songData[id].charts[dn].level === 15;
       })
     }
     const b19 = sortRecords(records).slice(0, 19);
     const b19average = rounding(b19.reduce((previous, { rating }) => previous += rating, 0) / 19, 2);
-    const averageDifficulty = rounding(b19.reduce((previous, { id, dn }) => previous + songData[id].chart[dn].difficulty, 0) / 19, 2);
-    const lv16 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 16);
-    const lv15 = b19.filter(({ id, dn }) => songData[id].chart[dn].level === 15);
+    const averageDifficulty = rounding(b19.reduce((previous, { id, dn }) => previous + songData[id].charts[dn].difficulty, 0) / 19, 2);
+    const lv16 = b19.filter(({ id, dn }) => songData[id].charts[dn].level === 16);
+    const lv15 = b19.filter(({ id, dn }) => songData[id].charts[dn].level === 15);
     const result = [];
     result.push(`截至Phigros 2.4.3版本，\n共有${songTotal}首歌曲，${chartTotal}张谱面。`);
     if (songPlayedTotal === 0 && chartPlayedTotal === 0) result.push('您尚未游玩过任何歌曲与谱面！');
@@ -327,7 +334,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
       }
     });
     container.appendChild(input);
-    container.appendChild(createElement({ tagName: 'p', text: '数值为三位数，\n百位代表颜色（1是绿，2是蓝，以此类推），\n十位和个位为等级\n例：彩3→503、金48→448' }));
+    container.appendChild(createElement({ tagName: 'p', text: '数值为三位数，\n百位代表颜色（1是绿，2是蓝，以此类推），\n十位和个位为等级。\n例：彩3→503、金48→448' }));
     new Dialog().title('修改课题成绩').content(container, true)
       .button('取消').button('确定', close => {
         const value = parseInt(input.value);
@@ -350,7 +357,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
     container.appendChild(createElement({
       tagName: 'div',
       style: { padding: '0.55rem 0' },
-      text: `${song.song} (${dn} Lv.${song.chart[dn].difficulty})`
+      text: `${song.name} (${dn} Lv.${song.charts[dn].difficulty})`
     }));
     const acc = createElement({
       tagName: 'input',
@@ -397,7 +404,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
       container.appendChild(createElement({
         tagName: 'div',
         style: { padding: '0.55rem 0' },
-        text: `${song.song} (${dn} Lv.${song.chart[dn].difficulty})`
+        text: `${song.name} (${dn} Lv.${song.charts[dn].difficulty})`
       }));
       const input = createElement({
         tagName: 'input',
@@ -405,38 +412,27 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
         attr: { type: 'text', placeholder: '输入' }
       });
       container.appendChild(input);
-      const fcc = createElement({
-        tagName: 'div',
-        classList: ['checkbox'],
-        style: { margin: '0.55rem auto' }
-      });
-      const fc = createElement({ tagName: 'input', attr: { type: 'checkbox' } });
-      fcc.appendChild(fc);
-      const label = createElement({
-        tagName: 'label',
-        html: '<span>Full Combo</span><span class="pattern"></span>'
-      });
-      fc.id = label.htmlFor = 'full_combo2';
-      fcc.appendChild(label);
-      container.appendChild(fcc);
       container.appendChild(createElement({
         tagName: 'div',
         style: { padding: '0.55rem 0' },
-        text: '依次输入\n最大连击、Perfect、Good、Bad、Miss的数量\n以空格分割，数据将自动计算\n例：1415 1692 6 1 1、1266 1443 0 0 1'
+        text: '依次输入最大连击数和\nPerfect、Good、Bad、Miss的数量。\n以空格分割，数据将自动计算。\n例：1415 1692 6 1 1、1266 1443 0 0 1\n若不填写则会清零此记录。'
       }));
       new Dialog().title('输入精确数据').content(container, true).button('取消').button('确定', close => {
         const data = getData();
-        const [maxCombo, p, g = 0, b = 0, m = 0] = input.value.split(' ').map(item => Number(item));
-        if (isNullish(maxCombo) || isNullish(p)) Reflect.deleteProperty(data.records, recordID);
+        const result = [...input.value.split(' '), 0, 0, 0].map(value => Number(value));
+        for (const value of result)
+          if (isNaN(value)) return error();
+        const [maxCombo, p, g, b, m] = result;
+        if (maxCombo === 0) Reflect.deleteProperty(data.records, recordID);
         else {
           const combo = p + g + b + m;
           const base = 900000 / combo;
           const baseScore = base * p + base * 0.65 * g;
           const a = 100 - 35 / combo * g - 100 / combo * (b + m);
           const s = rounding(maxCombo / combo * 100000 + baseScore);
-          const c = fc.checked ? 1 : 0;
-          if (combo !== song.chart[dn].combo) return error();
-          if (((a === 100 || (b + m === 0)) && !c) || ((a === 0 || (b + m !== 0)) && c)) return error();
+          const c = b + m === 0 ? 1 : 0;
+          if (c && (maxCombo != combo)) return error();
+          if (!c && (maxCombo === combo)) return error();
           if (rounding(a / 100 * 900000) !== rounding(baseScore)) return error();
           data.records[recordID] = { a, s, c };
         }
@@ -445,9 +441,6 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
     });
     container.appendChild(exact);
     editRecord.content(container, true)
-      .button('歌曲信息', close => new Dialog().title('歌曲信息')
-        .content(createSongInfo({ ...song, img: `https://website-assets.starsky919.xyz/phigros/images/${songID}.png` }), true)
-        .button('确定').show())
       .button('取消').button('确定', close_2 => {
         const data = getData();
         const a = parseFloat(acc.value) || 0;
@@ -465,5 +458,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
   });
 
   if (isNullish(getData())) initialize();
-  renderScores();
-}).catch(err => Dialog.show('数据加载失败，请检查网络连接', '错误'));
+  refreshScores();
+}).catch(err => {
+  Dialog.show(`可能是数据加载失败或是出现了Bug，\n请检查网络链接。\n若无法解决问题，请截图反馈。\n\n错误信息：\n${err}`, '错误');
+});

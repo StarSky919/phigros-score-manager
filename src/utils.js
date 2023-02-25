@@ -51,7 +51,7 @@ export function random(min, max) {
 }
 
 export function rounding(num, digit = 0) {
-  return (Math.round(num * (10 ** digit)) / 10 ** digit).toFixed(digit);
+  return Number((Math.round(num * (10 ** digit)) / 10 ** digit).toFixed(digit));
 }
 
 export function sleep(delay) {
@@ -106,23 +106,7 @@ export function createRecordBox(data) {
   data.rank = s < 7e5 ? 'F' : s < 82e4 ? 'C' : s < 88e4 ? 'B' : s < 92e4 ? 'A' : s < 96e4 ? 'S' : s < 1e6 ? 'V' : 'φ';
   data.score = s.toString().padStart(6, '0');
   data.acc = `${rounding(a, 2)}%`;
-  if (a < 100 && data.O && data.O <= 100) data.acc += ` (${rounding(data.O < 70 ? 70 : data.O < 100 ? data.O : phi.rating < difficulty ? 100 : data.O, 2)}%)`;
+  if (a < 100 && data.O && data.O <= 100) data.acc += ` (${rounding(data.O < 70 ? 70 : data.O < 100 ? data.O : data.rating < difficulty ? 100 : data.O, 2)}%)`;
   box.querySelector('.rank').style.color = s === 1e6 ? '#F6F600' : data.c ? '#0077FF' : s >= 7e5 ? '#444444' : '#BFBFBF';
-  return compile(box, data), box;
-}
-
-export function createSongInfo(data) {
-  const box = $('song_info').content.cloneNode(true).children[0];
-  data.bpm = data.bpm || '暂无数据';
-  data.length = data.length || '暂无数据';
-  const img = box.querySelector('img');
-  img.src = data.img;
-  img.addEventListener('click', event => createElement({ tagName: 'a', attr: { href: img.src, target: '_blank' } }).click());
-  img.addEventListener('error', event => img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM0AAABsCAYAAADJ/DYiAAAAAXNSR0IArs4c6QAAAm5JREFUeF7t07ENACAMBDHYf8lsAhITcL1Tf2Xl9syc5QgQ+BbYovm2MiTwBETjEQhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJyAaP0AgCogmgpkTEI0fIBAFRBPBzAmIxg8QiAKiiWDmBETjBwhEAdFEMHMCovEDBKKAaCKYOQHR+AECUUA0EcycgGj8AIEoIJoIZk5ANH6AQBQQTQQzJ3ABvvSHkNEIMfAAAAAASUVORK5CYII=');
-  for (const dn in data.chart) {
-    const chart = $('chart_info').content.cloneNode(true);
-    compile(chart, Object.assign({ dn }, data.chart[dn]));
-    box.querySelector('.info').appendChild(chart);
-  }
   return compile(box, data), box;
 }
