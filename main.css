@@ -191,7 +191,7 @@ p {
   transition: opacity 0.2s ease;
 }
 
-.dialog_background.hidden {
+.dialog_container.hidden .dialog_background {
   opacity: 0;
   pointer-events: none;
 }
@@ -207,17 +207,17 @@ p {
   left: 50%;
   max-height: 80vh;
   width: var(--dialog-width);
-  opacity: 0;
+  opacity: 1;
   background: var(--background-color);
-  transform: translateX(-50%) translateY(-50%) scale(0.9);
+  transform: translateX(-50%) translateY(-50%) scale(1);
   transition: opacity 0.2s, transform 0.2s;
-  pointer-events: none;
+  pointer-events: initial;
 }
 
-.dialog.display {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-50%) scale(1);
-  pointer-events: initial;
+.dialog_container.hidden .dialog {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-50%) scale(0.9);
+  pointer-events: none;
 }
 
 .dialog_title {

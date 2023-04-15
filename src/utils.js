@@ -60,18 +60,6 @@ export function sleep(delay) {
   });
 }
 
-export function createElement({ tagName, id, classList, attr, style, cssText, text, html }) {
-  const el = document.createElement(tagName);
-  id && (el.id = id);
-  classList && el.classList.add(...classList);
-  attr && Object.keys(attr).forEach(name => el.setAttribute(name, attr[name]));
-  style && Object.keys(style).forEach(name => el.style[name] = style[name]);
-  cssText && (el.style.cssText += cssText);
-  text && (el.innerText = text);
-  html && (el.innerHTML = html);
-  return el;
-}
-
 export function getRating(acc, difficulty) {
   if (acc < 70) return 0;
   return ((acc - 55) / 45) ** 2 * difficulty;
@@ -109,4 +97,16 @@ export function createRecordBox(data) {
   if (a < 100 && data.O && data.O <= 100) data.acc += ` (${rounding(data.O < 70 ? 70 : data.O < 100 ? data.O : data.rating < difficulty ? 100 : data.O, 2)}%)`;
   box.querySelector('.rank').style.color = s === 1e6 ? '#F6F600' : data.c ? '#0077FF' : s >= 7e5 ? '#444444' : '#BFBFBF';
   return compile(box, data), box;
+}
+
+export function createElement({ tagName, id, classList, attr, style, cssText, text, html }) {
+  const el = document.createElement(tagName);
+  id && (el.id = id);
+  classList && el.classList.add(...classList);
+  attr && Object.keys(attr).forEach(name => el.setAttribute(name, attr[name]));
+  style && Object.keys(style).forEach(name => el.style[name] = style[name]);
+  cssText && (el.style.cssText += cssText);
+  text && (el.innerText = text);
+  html && (el.innerHTML = html);
+  return el;
 }

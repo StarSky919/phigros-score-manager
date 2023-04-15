@@ -28,7 +28,7 @@ export async function generate(version, songData, { playerID, ChallengeModeRank,
   const column = 2;
   const loading = new Dialog({ cancellable: false })
     .title('正在生成图片，请稍等……')
-    .content(cav, true)
+    .content(cav)
     .show();
 
   try {

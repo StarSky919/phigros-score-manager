@@ -2,9 +2,13 @@ import { noop, Time, isNullish, sleep, createElement } from './utils.js';
 
 const { body } = document;
 export class Dialog {
+  _container = createElement({
+    tagName: 'div',
+    classList: ['dialog_container', 'hidden']
+  });
   _background = createElement({
     tagName: 'div',
-    classList: ['dialog_background', 'hidden']
+    classList: ['dialog_background']
   });
   _dialog = createElement({
     tagName: 'div',
@@ -29,6 +33,8 @@ export class Dialog {
     this._dialog.appendChild(this._title);
     this._dialog.appendChild(this._content);
     this._dialog.appendChild(this._buttons);
+    this._container.appendChild(this._background);
+    this._container.appendChild(this._dialog);
   }
 
   title(title) {
@@ -37,46 +43,42 @@ export class Dialog {
   }
 
   content(content, html = false) {
-    if (html) {
-      if (typeof content === 'string') this._content.innerHTML = content;
-      else this._content.appendChild(content);
-    } else {
-      const message = createElement({
+    if (typeof content === 'string') {
+      if (html) this._content.innerHTML = content;
+      else this._content.appendChild(createElement({
         tagName: 'p',
         text: content
-      });
-      this._content.appendChild(message);
+      }));
+    } else {
+      this._content.appendChild(content);
     }
     return this;
   }
 
-  button(text, func = () => this.close()) {
+  button(text, func = noop) {
+    const close = () => this.close();
     const button = createElement({
       tagName: 'span',
       classList: ['button'],
       text
     });
-    button.addEventListener('click', func.bind(this, () => this.close()));
+    button.addEventListener('click', async event => await func.call(this, close) !== false && close());
     this._buttons.appendChild(button);
     return this;
   }
 
   show() {
-    body.appendChild(this._background);
-    body.appendChild(this._dialog);
-    sleep(25).then(() => {
-      this._background.classList.remove('hidden');
-      this._dialog.classList.add('display');
+    body.appendChild(this._container);
+    sleep(0.1 * Time.second).then(() => {
+      this._container.classList.remove('hidden');
     });
     return this;
   }
 
   close() {
-    this._background.classList.add('hidden');
-    this._dialog.classList.remove('display');
+    this._container.classList.add('hidden');
     sleep(0.3 * Time.second).then(() => {
-      body.removeChild(this._dialog);
-      body.removeChild(this._background);
+      body.removeChild(this._container);
     });
   }
 
