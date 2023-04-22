@@ -11,7 +11,7 @@ try {
   Dialog.show('localStorage API发生错误！\n如果您打开了浏览器的无痕（隐私）模式，\n请将它关闭并刷新页面。', '错误');
 }
 
-const VERSION = [0, 4, 415];
+const VERSION = [0, 4, 422];
 const VERSION_TEXT = `v${VERSION.join('.')}`;
 $('version').innerText = VERSION_TEXT;
 
@@ -22,9 +22,11 @@ $('about').addEventListener('click', event => {
       '\n开发者：StarSky919' +
       '\nQQ：2197972830，Q群：486908465')
     .button('更新日志', async close => {
+      close();
       if (!changelog) changelog = await fetch('changelog.txt').then(res => res.text());
       new Dialog().title('更新日志')
         .content(changelog).button('确定').show();
+      return false;
     })
     .button('确定').show();
 });
@@ -66,14 +68,16 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
     if (padEmpty) {
       for (const songID in songData) {
         for (const dn in songData[songID].charts) {
+          if (dn === 'Legacy') continue;
           const key = `${songID}.Record.${dn}`;
-          if (isNullish(records[key])) records[key] = { a: 0, s: 0, c: 0 };
+          if (isNullish(records[key])) records[key] = { a: 0, s: 0, c: 0, notPlayed: true };
         }
       }
     }
     const temp = [];
     for (const key in records) {
       const [, id, dn] = parseRecordID(key);
+      if (dn === 'Legacy') continue;
       temp.push(Object.assign({ id, dn, key }, records[key]));
     }
     const sorted = temp
@@ -108,7 +112,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
     for (let i = 0; i < final.length; i++) {
       const record = final[i];
       if (i === 0 && record.a === 0) {
-        const recordBox = createRecordBox({ song: '无数据', score: 0, acc: 0, dn: 'EZ', difficulty: 0, rating: 0, ranking: 0 });
+        const recordBox = createRecordBox({ song: '无数据', score: 0, acc: 0, dn: 'EZ', difficulty: 0, rating: 0, ranking: 0, notPlayed: true });
         recordBox.addEventListener('click', event => Dialog.show('您还没有AP任何一首歌。\n收歌可以大幅提升RkS哦！'));
         fragment.appendChild(recordBox);
         continue;
@@ -120,6 +124,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
       const S = ((A + 0.5 | 0) - A + 0.5) / 5;
       const O = getAcc(record.index < 19 ? record.rating + S : phi1b19[19].rating + S, difficulty);
       const recordBox = createRecordBox({
+        notPlayed: record.notPlayed,
         song: song.name,
         score: record.s,
         acc: record.a,
@@ -280,51 +285,81 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
     new Dialog().title('修改名称').content(container)
       .button('取消').button('确定', close => {
         data.playerID = input.value ? input.value.trim().slice(0, 16) : 'GUEST';
-        setData(data), refreshScores();
+        setData(data), pid.innerText = getData().playerID;
       }).show();
   });
 
   rks.addEventListener('click', event => {
+    const dns = ['EZ', 'HD', 'IN', 'AT'];
     const { records } = getData();
     const songKeys = Object.keys(songData),
-      recordKeys = Object.keys(records);
-    const songTotal = songKeys.length;
-    const chartTotal = Object.values(songData).reduce((previous, current) => previous + Object.keys(current.charts).length, 0);
-    const songPlayedTotal = Object.keys(recordKeys.reduce((previous, current) => {
+      recordKeys = Object.keys(records).filter(key => !key.endsWith('Legacy'));
+
+    const allCharts = Object.entries(songData).reduce((previous, current) => {
+      const [key, { charts }] = current;
+      if ('Legacy' in charts) Reflect.deleteProperty(charts, 'Legacy');
+      const temp = [];
+      for (const [dn, chart] of Object.entries(charts)) {
+        temp.push(Object.assign(chart, { dn, key }));
+      }
+      previous.push(...temp);
+      return previous;
+    }, []);
+    const chartTotal = allCharts.length;
+    const chartCounts = (_ => {
+      const data = {};
+      dns.forEach(dn => {
+        data[dn] = allCharts.filter(chart => chart.dn === dn).length;
+      });
+      return data;
+    })();
+
+    const songPlayed = Object.keys(recordKeys.reduce((previous, current) => {
       const [, id] = parseRecordID(current);
       previous[id] = true;
       return previous;
-    }, {})).length;
-    const chartPlayedTotal = recordKeys.length;
-    const chartFCedTotal = recordKeys.filter(key => records[key].c);
-    const chartAPedTotal = recordKeys.filter(key => records[key].a === 100);
-    const chartAPed = {
-      AT: chartAPedTotal.filter(key => key.endsWith('AT')),
-      IN: chartAPedTotal.filter(key => key.endsWith('IN')),
-      Lv16: chartAPedTotal.filter(key => {
-        const [, id, dn] = parseRecordID(key);
-        return songData[id].charts[dn].level === 16;
-      }),
-      Lv15: chartAPedTotal.filter(key => {
-        const [, id, dn] = parseRecordID(key);
-        return songData[id].charts[dn].level === 15;
-      })
-    };
-    const b19 = sortRecords(records).slice(0, 19);
-    const b19average = rounding(b19.reduce((previous, { rating }) => previous += rating, 0) / 19, 2);
-    const averageDifficulty = rounding(b19.reduce((previous, { id, dn }) => previous + songData[id].charts[dn].difficulty, 0) / 19, 2);
-    const lv16 = b19.filter(({ id, dn }) => songData[id].charts[dn].level === 16);
-    const lv15 = b19.filter(({ id, dn }) => songData[id].charts[dn].level === 15);
+    }, {}));
+
+    const chartPlayed = (_ => {
+      const cl = recordKeys;
+      const data = {
+        total: cl.length
+      };
+      dns.forEach(dn => {
+        data[dn] = cl.filter(key => key.endsWith(dn)).length;
+      });
+      return data;
+    })();
+
+    const chartFCed = (_ => {
+      const fc = recordKeys.filter(key => records[key].c);
+      const data = {
+        total: fc.length
+      };
+      dns.forEach(dn => {
+        data[dn] = fc.filter(key => key.endsWith(dn)).length;
+      });
+      return data;
+    })();
+
+    const chartAPed = (_ => {
+      const ap = recordKeys.filter(key => records[key].a === 100);
+      const data = {
+        total: ap.length
+      };
+      dns.forEach(dn => {
+        data[dn] = ap.filter(key => key.endsWith(dn)).length;
+      });
+      return data;
+    })();
+
     const result = [];
-    result.push(`截至Phigros ${pgrVersion}版本，\n共有${songTotal}首歌曲，${chartTotal}张谱面。`);
-    if (songPlayedTotal === 0 && chartPlayedTotal === 0) result.push('您尚未游玩过任何歌曲与谱面！');
-    else {
-      result.push(`您已游玩过其中的${songPlayedTotal}首歌曲，${chartPlayedTotal}张谱面。`);
-      result.push(`\n所有游玩过的谱面中，\nFull Combo的数量为${chartFCedTotal.length}，All Perfect的数量为${chartAPedTotal.length}。`);
-      result.push(`所有All Perfect的成绩中，\nIN难度的数量为${chartAPed.IN.length}，AT难度的数量为${chartAPed.AT.length}，\nLv.15的数量为${chartAPed.Lv15.length}，Lv.16的数量为${chartAPed.Lv16.length}。`);
-      result.push(`\n在您的Best19中，\n谱面平均定数约为${averageDifficulty}，平均Rating约为${b19average}，\nLv.15的数量为${lv15.length}，Lv.16的数量为${lv16.length}。`);
-      result.push('再接再厉！');
-    }
+    result.push(`Phigros v${pgrVersion}`);
+    result.push(`\n总计：\nCL：${chartPlayed.total} / ${chartTotal}、FC：${chartFCed.total} / ${chartTotal}、AP：${chartAPed.total} / ${chartTotal}`);
+    result.push(`\nAT：\nCL：${chartPlayed.AT} / ${chartCounts.AT}、FC：${chartFCed.AT} / ${chartCounts.AT}、AP：${chartAPed.AT} / ${chartCounts.AT}`);
+    result.push(`\nIN：\nCL：${chartPlayed.IN} / ${chartCounts.IN}、FC：${chartFCed.IN} / ${chartCounts.IN}、AP：${chartAPed.IN} / ${chartCounts.IN}`);
+    result.push(`\nHD：\nCL：${chartPlayed.HD} / ${chartCounts.HD}、FC：${chartFCed.HD} / ${chartCounts.HD}、AP：${chartAPed.HD} / ${chartCounts.HD}`);
+    result.push(`\nEZ：\nCL：${chartPlayed.EZ} / ${chartCounts.EZ}、FC：${chartFCed.EZ} / ${chartCounts.EZ}、AP：${chartAPed.EZ} / ${chartCounts.EZ}`);
     Dialog.show(result.join('\n'), '统计信息');
   });
 
@@ -349,7 +384,10 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
         const value = parseInt(input.value);
         if (value && (value > 548 || value < 103 || value % 100 > 48 || value % 100 < 3)) return Dialog.show('请输入正确的课题成绩', '错误');
         data.ChallengeModeRank = value ? value : 0;
-        setData(data), refreshScores();
+        setData(data);
+        const { ChallengeModeRank } = getData();
+        cmrRank.innerText = CMRRank[Math.floor(ChallengeModeRank / 100)];
+        cmrLevel.innerText = ChallengeModeRank === 0 ? '' : ChallengeModeRank % 100;
       }).show();
   });
 
@@ -454,7 +492,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
     });
     container.appendChild(exact);
     editRecord.content(container)
-      .button('取消').button('确定', close => {
+      .button('取消').button('查看曲绘', close => window.open(`https://website-assets.starsky919.xyz/phigros/images/${songID}.png`, '_blank') && false).button('确定', close => {
         const data = getData();
         const a = parseFloat(acc.value) || 0;
         const s = parseInt(score.value) || 0;

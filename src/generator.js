@@ -42,12 +42,12 @@ export async function generate(version, songData, { playerID, ChallengeModeRank,
     ctx.fillStyle = '#F9F9F9';
     ctx.textBaseline = 'top';
 
-    ctx.font = `${realHeight / 48}px Saira, MiLanPro`;
+    ctx.font = `${realHeight / 48}px Saira, HYWenHei`;
     ctx.textAlign = 'left';
     ctx.fillText(`${playerID} (${rounding(rankingScore, 2)})`, padding * 2, padding * 2, realWidth / 2 - padding * 2);
     ctx.textAlign = 'right';
     ctx.fillText(`Phigros Player Info`, realWidth - padding * 2, padding * 2);
-    ctx.font = `${realHeight / 80}px Saira, MiLanPro`;
+    ctx.font = `${realHeight / 80}px Saira, HYWenHei`;
     ctx.textBaseline = 'bottom';
     ctx.textAlign = 'left';
     ctx.fillText(`Real Ranking Score: ${rounding(rankingScore, 5)}`, padding * 2, padding * 3.4);
@@ -94,12 +94,12 @@ export async function generate(version, songData, { playerID, ChallengeModeRank,
       const mw = bw - iw - bp * 3;
 
       ctx.textAlign = 'left';
-      ctx.font = `${realHeight / 96}px Saira, MiLanPro`;
+      ctx.font = `${realHeight / 96}px Saira, HYWenHei`;
       const title = song.name;
       ctx.fillText(title, x, y += bp / 2, mw);
       y += bp * 1.875;
 
-      ctx.font = `${realHeight / 64}px Saira, MiLanPro`;
+      ctx.font = `${realHeight / 64}px Saira, HYWenHei`;
       const score = (s || 0).toString().padStart(6, '0');
       const { actualBoundingBoxDescent: scoreABBD } = ctx.measureText(score);
       ctx.fillText(score, x, y += bp / 2.25, mw);
@@ -114,7 +114,7 @@ export async function generate(version, songData, { playerID, ChallengeModeRank,
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#F9F9F9';
-      ctx.font = `${realHeight / 96}px Saira, MiLanPro`;
+      ctx.font = `${realHeight / 96}px Saira, HYWenHei`;
       const acc = `Acc: ${rounding(a, 2)}%`;
       ctx.fillText(acc, x, y += bp / 6, mw);
       y += bp * 2.25;
@@ -127,7 +127,7 @@ export async function generate(version, songData, { playerID, ChallengeModeRank,
       ctx.fillText(ranking, x + bw - iw - bp * 3, y);
     }
 
-    ctx.font = `${realHeight / 80}px Saira, MiLanPro`;
+    ctx.font = `${realHeight / 80}px Saira, HYWenHei`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';

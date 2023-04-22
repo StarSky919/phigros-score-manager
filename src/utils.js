@@ -91,11 +91,11 @@ export function createRecordBox(data) {
   const box = $('record_box').content.cloneNode(true).children[0];
   const s = data.score || 0;
   const a = data.acc;
-  data.rank = s < 7e5 ? 'F' : s < 82e4 ? 'C' : s < 88e4 ? 'B' : s < 92e4 ? 'A' : s < 96e4 ? 'S' : s < 1e6 ? 'V' : 'φ';
+  data.rank = data.notPlayed ? '-' : s < 7e5 ? 'F' : s < 82e4 ? 'C' : s < 88e4 ? 'B' : s < 92e4 ? 'A' : s < 96e4 ? 'S' : s < 1e6 ? 'V' : 'φ';
   data.score = s.toString().padStart(6, '0');
   data.acc = `${rounding(a, 2)}%`;
   if (a < 100 && data.O && data.O <= 100) data.acc += ` (${rounding(data.O < 70 ? 70 : data.O < 100 ? data.O : data.rating < difficulty ? 100 : data.O, 2)}%)`;
-  box.querySelector('.rank').style.color = s === 1e6 ? '#F6F600' : data.c ? '#0077FF' : s >= 7e5 ? '#444444' : '#BFBFBF';
+  box.querySelector('.rank').style.color = s === 1e6 ? '#F6F600' : data.c ? '#0077FF' : s >= 7e5 ? '#444444' : data.notPlayed ? 'inherit' : '#BFBFBF';
   return compile(box, data), box;
 }
 

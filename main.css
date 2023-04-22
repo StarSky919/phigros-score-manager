@@ -15,11 +15,11 @@
 }
 
 @font-face {
-  font-family: "MiLanPro";
+  font-family: "HYWenHei";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("./fonts/MiLanPro_Regular.ttf") format("truetype");
+  src: url("./fonts/HYWenHei-55W.ttf") format("truetype");
 }
 
 * {
@@ -32,7 +32,7 @@
 *,
 *::before,
 *::after {
-  font-family: "Saira", "MiLanPro", sans-serif;
+  font-family: "Saira", "HYWenHei", sans-serif;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -232,7 +232,7 @@ p {
   overflow-y: scroll;
   width: 100%;
   padding: 0 0.65rem;
-  background: #F3F3F3;
+  background: #F6F6F6;
   text-align: center;
   word-wrap: break-word;
   font-size: 90%;
@@ -309,6 +309,7 @@ main>.row .button {
   justify-content: space-between;
   margin: 0 auto;
   width: 100%;
+  user-select: none;
 }
 
 #record_list.empty {
@@ -328,6 +329,7 @@ main>.row .button {
   border: 1px solid #BFBFBF;
   background: var(--background-color);
   line-height: 1.2rem;
+  transition: border-color 0.2s ease;
 }
 
 .record_box * {
@@ -365,6 +367,10 @@ main>.row .button {
 
 .record_box .ranking {
   text-align: right;
+}
+
+.record_box:active {
+  border-color: #9898FF !important;
 }
 
 /*----------------*/
