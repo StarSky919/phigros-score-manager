@@ -406,6 +406,10 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
       style: { padding: '0.55rem 0' },
       text: `${song.name} (${dn} Lv.${song.charts[dn].difficulty})`
     }));
+    const ib1 = createElement({
+      tagName: 'div',
+      style: { margin: '0.55rem auto' }
+    });
     const acc = createElement({
       tagName: 'input',
       classList: ['input'],
@@ -416,7 +420,12 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
       }
     });
     acc.addEventListener('focus', event => event.target.select());
-    container.appendChild(acc);
+    ib1.appendChild(acc);
+    container.appendChild(ib1);
+    const ib2 = createElement({
+      tagName: 'div',
+      style: { margin: '0.55rem auto' }
+    });
     const score = createElement({
       tagName: 'input',
       classList: ['input'],
@@ -427,7 +436,8 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
       }
     });
     score.addEventListener('focus', event => event.target.select());
-    container.appendChild(score);
+    ib2.appendChild(score);
+    container.appendChild(ib2);
     const fcc = createElement({
       tagName: 'div',
       classList: ['checkbox'],

@@ -79,7 +79,7 @@ export async function generate(version, songData, { playerID, ChallengeModeRank,
     ctx.stroke();
 
     for (const { index, id, dn, a, s, c } of records) {
-      const song = songData[id] || { song: 'No Data', chart: {} };
+      const song = songData[id] || { name: 'No Data', charts: {} };
       const cr = Math.floor(index / 2);
       const cc = index % 2;
       if (cr + 1 > row) break;
