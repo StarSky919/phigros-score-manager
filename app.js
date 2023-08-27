@@ -261,7 +261,7 @@ fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => 
           new Dialog({ cancellable: false })
           .content('查分图已生成完毕，点击“下载”按钮即可保存。')
           .button('取消').button('下载', close =>
-            createElement({ tagName: 'a', attr: { download: 'image.png', href: dataURL } }).click()
+            createElement({ tagName: 'a', attr: { download: `${Date.now()}.png`, href: dataURL } }).click()
           ).show()
         );
       }).show();
