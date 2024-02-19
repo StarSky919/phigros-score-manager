@@ -63,7 +63,7 @@ function initialize() {
       .button('开始').show()).show();
 }
 
-fetch('https://website-assets.starsky919.xyz/phigros/pgrData.json').then(res => res.json()).then(async ({ pgrVersion, songData }) => {
+fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => res.json()).then(async ({ version: pgrVersion, data: songData }) => {
   function sortRecords(records, padEmpty = true) {
     if (padEmpty) {
       for (const songID in songData) {
