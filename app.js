@@ -56,6 +56,7 @@ function setData({ playerID, ChallengeModeRank, records }) {
 
 function initialize() {
   setData({ playerID: 'GUEST', ChallengeModeRank: 0, records: {} });
+  return;
   new Dialog({ cancellable: false }).title('欢迎使用Phigros分数管理器！')
     .content('已自动为您新建了一个空存档。\n稍后您可以导入自己的存档，\n也可以手动输入所需的数据。\n绿色背景表示该谱面推分可以增加RkS，\n红色背景则相反。\n括号里是该谱面使RkS+0.01所需的最低Acc。')
     .button('下一步', close => new Dialog({ cancellable: false }).title('欢迎使用Phigros分数管理器！')
@@ -520,6 +521,9 @@ fetch('https://website-assets.starsky919.xyz/phigros/songs.json').then(res => re
 
   if (isNullish(getData())) initialize();
   refreshScores();
+  new Dialog({ cancellable: false }).title('公告')
+    .content('Phigros分数管理器已停止维护。\n如果您需要查分，可以加入QQ群486908465使用Bot。\n感谢大家一直以来的支持。')
+    .show();
 }).catch(err => {
   Dialog.show(`可能是数据加载失败或是出现了Bug，\n请检查网络链接。\n若无法解决问题，请截图反馈。\n\n错误信息：\n${err}`, '错误');
 });
